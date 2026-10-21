@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบข้อมูลสารสนเทศทางการศึกษาจังหวัดสระบุรี</title>
+<script>
+  /* แก้ค่า URL ด้านล่างเป็นลิงก์เว็บแอป GAS (/exec) ของคุณ แล้วต่อท้ายด้วย ?api=1 */
+  window.EIS_API = "https://script.google.com/macros/s/AKfycbzI5INdbFfsZMMv6UJt-a2jpx9YXulginRRofBfQu6Yl_O5tfhpFpnlhjVdHHNSE8Iz/exec/exec?api=1";
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  /* ===== S-MES Design Tokens ===== */
+  :root{
+    --font-prompt:'Prompt',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg-gradient:linear-gradient(-45deg,#eef2f6,#e2e8f0,#eef2f6,#f8fafc);
+    --primary-gradient:linear-gradient(135deg,#818cf8,#6366f1);
+    --text-main:#0f172a; --text-muted:#475569; --text-soft:#64748b;
+    --primary-blue:#6366f1; --deep-blue:#1e3a8a;
+    --glass-bg-base:rgba(255,255,255,.6); --glass-bg-card:rgba(255,255,255,.65); --glass-bg-hover:rgba(255,255,255,.8);
+    --glass-border:rgba(255,255,255,.8); --glass-blur:blur(16px);
+    --shadow-sm:0 2px 8px rgba(15,23,42,.04);
+    --shadow-md:0 8px 32px 0 rgba(30,58,138,.05),0 1px 3px rgba(15,23,42,.03);
+    --shadow-lg:0 20px 40px -15px rgba(99,102,241,.15),0 1px 5px rgba(15,23,42,.03);
+    --transition-smooth:all .4s cubic-bezier(.16,1,.3,1);
+    /* chart series (validated: indigo / orange / aqua; male indigo · female pink) */
+    --series-1:#6366f1; --series-2:#eb6834; --series-3:#1baf7a; --series-f:#e87ba4;
+    --grid:rgba(148,163,184,.25);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{font-family:var(--font-prompt);margin:0;color:var(--text-main);background:var(--bg-gradient);background-size:400% 400%;animation:gradientBG 25s ease infinite;min-height:100vh}
+  @keyframes gradientBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(148,163,184,.5);border-radius:4px}
+  #app-layout{display:flex;min-height:100vh}
+  .sidebar{width:270px;flex-shrink:0;display:flex;flex-direction:column;background:rgba(255,255,255,.35);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.4);box-shadow:var(--shadow-sm);position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden}
+  .sidebar-header{padding:22px 20px;border-bottom:1px solid rgba(255,255,255,.4);color:var(--deep-blue);font-weight:700;font-size:17px;line-height:1.35}
+  .sidebar-header small{display:block;font-weight:500;font-size:12px;color:var(--text-muted);margin-top:4px}
+  .menu-list{list-style:none;padding:0;margin:10px 0}
+  .menu-group-label{padding:8px 20px 4px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-top:12px}
+  .menu-item{padding:11px 16px;display:block;color:var(--text-muted);cursor:pointer;transition:var(--transition-smooth);border-left:4px solid transparent;margin:3px 12px;border-radius:10px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .menu-item:hover{background:rgba(255,255,255,.6);color:var(--primary-blue)}
+  .menu-item.active{background:rgba(255,255,255,.85);color:var(--primary-blue);font-weight:700;border-left-color:var(--primary-blue);box-shadow:var(--shadow-sm)}
+  .main-content{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;color:#475569;background:rgba(255,255,255,.35);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.4);box-shadow:0 4px 20px rgba(15,23,42,.05);position:sticky;top:0;z-index:10;font-size:14px}
+  .topbar .meta{font-weight:400;font-size:13px;color:var(--text-soft)}
+  .content-area{padding:24px 30px 40px;max-width:1240px;margin:0 auto;width:100%}
+  .page-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .breadcrumb{color:var(--text-muted);font-size:13px;margin-bottom:4px}
+  .page-title{font-size:25px;color:var(--deep-blue);margin:0;font-weight:700;letter-spacing:-.01em}
+  #t13 tr.lv1 td{font-weight:700;color:var(--deep-blue);background:rgba(99,102,241,.10)}
+  #t13 tr.lv2 td{font-weight:600;background:rgba(148,163,184,.08)}
+  #t13 td:first-child{min-width:300px}
+  #t13 tr.lv3 td:first-child{padding-left:30px}
+  #t13 tr.lv2 td:first-child{padding-left:16px}
+  #t13 td:last-child,#t13 th:last-child{min-width:240px}
+  .filter-box{display:flex;gap:10px;flex-wrap:wrap}
+  .filter-box label{font-size:12px;font-weight:600;color:var(--text-muted);display:flex;flex-direction:column;gap:4px}
+  select,input[type=search]{font-family:var(--font-prompt);font-size:14px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);min-width:190px;color:var(--text-main)}
+  select:focus,input:focus{outline:none;border-color:var(--primary-blue);box-shadow:0 0 0 4px rgba(99,102,241,.2);background:rgba(255,255,255,.85)}
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:24px}
+  .sum-card{padding:20px 22px;border-radius:20px;background:var(--glass-bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);box-shadow:var(--shadow-md);transition:var(--transition-smooth);border-left:5px solid #6366f1}
+  .sum-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);background:var(--glass-bg-hover)}
+  .sum-card .title{font-size:13px;color:var(--text-muted);font-weight:600;margin-bottom:8px}
+  .sum-card .value{font-size:30px;font-weight:700;color:#3730a3;font-variant-numeric:tabular-nums;line-height:1.15}
+  .sum-card .hint{font-size:12px;color:var(--text-soft);margin-top:6px}
+  .sum-card.c-purple{border-left-color:#a855f7}.sum-card.c-purple .value{color:#7e22ce}
+  .sum-card.c-green{border-left-color:#10b981}.sum-card.c-green .value{color:#047857}
+  .sum-card.c-grey{border-left-color:#64748b}.sum-card.c-grey .value{color:#334155}
+  .charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-bottom:22px}
+  .glass{padding:20px 22px;border-radius:20px;background:var(--glass-bg-card);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);box-shadow:var(--shadow-md)}
+  .glass.full{grid-column:1/-1}
+  .glass h3{margin:0;font-size:16px;color:var(--deep-blue);font-weight:700}
+  .glass .cap{margin:2px 0 12px;font-size:12.5px;color:var(--text-soft)}
+  .chart{position:relative;height:300px}
+  .chart.tall{height:420px}
+  .table-wrapper{overflow:auto;border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th{background:rgba(99,102,241,.08);color:var(--deep-blue);font-weight:600;text-align:left;padding:10px 12px;position:sticky;top:0;backdrop-filter:blur(8px)}
+  td{padding:9px 12px;border-bottom:1px solid rgba(148,163,184,.2);vertical-align:top}
+  td.n,th.n{text-align:right}
+  .charts-grid>*,.map-grid>*{min-width:0}
+  td.neg{background:rgba(235,104,52,.14)} td.pos{background:rgba(99,102,241,.12)}
+  tr.total td{font-weight:700;background:rgba(99,102,241,.06)}
+  tbody tr:hover td{background:rgba(255,255,255,.55)}
+  .scroll{max-height:460px}
+  .idx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;margin-bottom:22px}
+  .idx-card{display:flex;flex-direction:column;gap:6px}
+  .idx-no{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;background:var(--primary-gradient);color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
+  .idx-head{display:flex;gap:10px;align-items:flex-start}
+  .idx-name{font-size:14px;font-weight:600;color:var(--text-main);line-height:1.45}
+  .idx-val{font-size:32px;font-weight:700;color:#3730a3;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:6px}
+  .idx-val small{font-size:14px;font-weight:500;color:var(--text-muted);margin-left:4px}
+  .idx-wait{font-size:16px;font-weight:600;color:var(--text-soft);margin-top:10px}
+  .idx-meta{font-size:12px;color:var(--text-soft);line-height:1.55}
+  .chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:600;background:rgba(99,102,241,.1);color:#4338ca;margin-right:6px}
+  .chip.wait{background:rgba(100,116,139,.12);color:#475569}
+  .delta{font-size:12.5px;color:var(--text-muted)}
+  .empty{color:var(--text-soft);font-style:italic}
+  .page{display:none}.page.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  #loading{padding:110px 20px;text-align:center;color:var(--text-muted);display:flex;flex-direction:column;align-items:center;gap:16px}
+  .spinner{width:54px;height:54px;border-radius:50%;border:5px solid rgba(99,102,241,.15);border-top-color:var(--primary-blue);border-right-color:#818cf8;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.spinner{animation-duration:2.4s}}
+  .load-title{font-weight:600;color:var(--deep-blue);font-size:16px}
+  .load-sub{font-size:13px;max-width:420px;line-height:1.6}
+  .load-err{color:#b91c1c}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;border:none;cursor:pointer;font:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--primary-gradient);box-shadow:var(--shadow-lg);text-decoration:none}
+  .btn:hover{filter:brightness(1.06)}
+  .menu-link{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:3px 12px;border-radius:10px;font-size:14px;color:#fff;background:var(--primary-gradient);text-decoration:none;font-weight:600;box-shadow:var(--shadow-sm);line-height:1.35;white-space:normal}
+  .menu-link small{display:block;font-weight:400;font-size:12px;opacity:.9}
+  .menu-link:hover{filter:brightness(1.06)}
+  .menu-link svg,.fab svg{flex-shrink:0}
+  .fab{position:fixed;right:22px;bottom:22px;z-index:30;display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;color:#fff;background:var(--primary-gradient);box-shadow:0 10px 30px -8px rgba(99,102,241,.6);text-decoration:none;font-weight:600;font-size:14px}
+  .fab:hover{filter:brightness(1.06)}
+  #foot{padding-bottom:72px}
+  .btn-full{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--primary-blue);background:rgba(255,255,255,.7);border:1px solid rgba(99,102,241,.3);text-decoration:none;white-space:nowrap}
+  .btn-full:hover{background:#fff}
+  .survey-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:22px}
+  .survey-card p{margin:4px 0 0;color:var(--text-muted);font-size:13px}
+  footer{font-size:12px;color:var(--text-soft);padding:0 30px 30px;max-width:1240px;margin:0 auto}
+  /* ===== แผนที่ ===== */
+  .map-grid{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:22px;margin-bottom:22px}
+  #map{height:620px;border-radius:14px;overflow:hidden;background:#e8edf3;z-index:0}
+  .leaflet-container{font-family:var(--font-prompt)}
+  .tile-soft{filter:grayscale(.85) brightness(1.06) contrast(.92)}
+  .leaflet-control-layers{border-radius:12px!important;font-size:12px}
+  .leaflet-popup-content-wrapper{border-radius:14px;box-shadow:var(--shadow-lg)}
+  .leaflet-popup-content{margin:12px 16px;font-size:13px;line-height:1.55;min-width:230px}
+  .pop-t{font-weight:700;color:var(--deep-blue);font-size:14px;margin-bottom:2px}
+  .pop-s{color:var(--text-soft);font-size:12px;margin-bottom:6px}
+  .pop-g{display:grid;grid-template-columns:auto auto;gap:2px 14px;font-variant-numeric:tabular-nums}
+  .pop-g b{text-align:right}
+  .pop-n{margin-top:6px;font-size:11.5px;color:#92400e;background:#fef3c7;border-radius:8px;padding:3px 8px}
+  .map-legend{background:rgba(255,255,255,.88);backdrop-filter:blur(8px);padding:10px 12px;border-radius:12px;box-shadow:var(--shadow-md);font-size:12px;line-height:1.7;color:var(--text-main)}
+  .map-legend .ttl{font-weight:700;color:var(--deep-blue);margin-bottom:2px}
+  .lg-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(15,23,42,.25)}
+  .lg-dot.hollow{background:#fff!important;border:2.5px solid #64748b;box-shadow:none}
+  .lg-ramp{display:flex;margin-top:3px}.lg-ramp span{flex:1;height:10px}
+  .lg-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--text-soft)}
+  .chk{flex-direction:row!important;align-items:center;gap:8px!important;align-self:flex-end;padding-bottom:10px}
+  .chk input{width:16px;height:16px;accent-color:var(--primary-blue)}
+  #tMapD tr{cursor:pointer}
+  #tMapD tr.sel td{background:rgba(99,102,241,.12);font-weight:600}
+  @media (max-width:900px){
+    .map-grid{grid-template-columns:1fr}
+    #map{height:460px}
+    .map-legend{font-size:10.5px;line-height:1.5;padding:6px 9px;max-width:190px}
+    .map-legend .lg-ramp,.map-legend .lg-scale{display:none}
+    #app-layout{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:sticky;top:0;z-index:20;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid rgba(255,255,255,.4)}
+    .sidebar-header{display:none}
+    .menu-list{display:flex;margin:6px 8px}
+    .menu-group-label{display:none}
+    .menu-item{margin:2px 4px;border-left:none;border-bottom:3px solid transparent}
+    .menu-item.active{border-bottom-color:var(--primary-blue)}
+    .topbar{position:static;padding:12px 16px;flex-direction:column;align-items:flex-start}
+    .content-area{padding:18px 16px 32px}
+    .charts-grid{grid-template-columns:1fr}
+    .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .sum-card .value{font-size:24px}
+    select,input[type=search]{min-width:0;width:100%}
+    .fab{right:14px;bottom:14px;padding:11px 14px}.fab span{display:none}
+    .menu-link{margin:2px 4px;white-space:nowrap}.menu-link small{display:none}
+    .filter-box{width:100%}.filter-box label{flex:1 1 140px}
+    footer{padding:0 16px 24px}
+  }
+</style>
+</head>
+<body>
+<a class="fab" href="https://shorturl.moe.go.th/psit2" target="_blank" rel="noopener" title="ประเมินความพึงพอใจและข้อเสนอแนะ" hidden id="fab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>ประเมินความพึงพอใจ</span></a>
+<div id="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">ระบบข้อมูลสารสนเทศทางการศึกษา<small>สำนักงานศึกษาธิการจังหวัดสระบุรี</small></div>
+    <ul class="menu-list" id="menu">
+      <li class="menu-group-label">ข้อมูลพื้นฐาน</li>
+      <li class="menu-item active" data-page="overview">ภาพรวมจังหวัด</li>
+      <li class="menu-item" data-page="schools">สถานศึกษาและผู้เรียน</li>
+      <li class="menu-item" data-page="map">แผนที่สถานศึกษา</li>
+      <li class="menu-item" data-page="higher">อุดมศึกษา</li>
+      <li class="menu-item" data-page="population">ประชากรวัยเรียน</li>
+      <li class="menu-group-label">ดัชนีทางการศึกษา</li>
+      <li class="menu-item" data-page="d1">1. การเข้าถึงโอกาส</li>
+      <li class="menu-item" data-page="d2">2. ความเท่าเทียม</li>
+      <li class="menu-item" data-page="d3">3. คุณภาพ</li>
+      <li class="menu-item" data-page="d4">4. ประสิทธิภาพ</li>
+      <li class="menu-item" data-page="d5">5. ตอบโจทย์บริบท</li>
+      <li class="menu-group-label">ข้อมูลเพิ่มเติม</li>
+      <li class="menu-item" data-page="onet">O-NET รายละเอียด</li>
+      <li class="menu-group-label">อ้างอิง</li>
+      <li class="menu-item" data-page="about">นิยามและแหล่งข้อมูล</li>
+      <li class="menu-group-label">ความคิดเห็นของท่าน</li>
+      <li><a class="menu-link" href="https://shorturl.moe.go.th/psit2" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>แบบประเมินความพึงพอใจ<small>และข้อเสนอแนะต่อระบบ</small></span></a></li>
+    </ul>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar"><span id="topTitle">ระบบข้อมูลสารสนเทศทางการศึกษาจังหวัดสระบุรี</span><span style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><span class="meta" id="topMeta"></span><a class="btn-full" id="btnFull" target="_blank" rel="noopener" hidden title="เปิดระบบในแท็บใหม่แบบเต็มหน้าจอ"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>เปิดเต็มหน้าจอ</a></span></div>
+    <div class="content-area">
+      <div id="loading" role="status" aria-live="polite">
+        <div class="spinner" id="loadSpin"></div>
+        <div class="load-title" id="loadTitle">กำลังโหลดข้อมูล…</div>
+        <div class="load-sub" id="loadSub">ระบบกำลังดึงข้อมูลจากฐานข้อมูล อาจใช้เวลาประมาณ 5 – 15 วินาที</div>
+      </div>
+
+      <!-- ภาพรวม -->
+      <section class="page active" id="p-overview" hidden>
+        <div class="page-header"><div><div class="breadcrumb">ข้อมูลพื้นฐาน</div><h1 class="page-title">ภาพรวมการจัดการศึกษาจังหวัดสระบุรี</h1></div></div>
+        <div class="summary-grid" id="ovTiles"></div>
+        <div class="charts-grid">
+          <div class="glass full"><h3>นักเรียน/นักศึกษาจำแนกตามสังกัด</h3><p class="cap">ปีการศึกษา 2568 เทียบ 2569 (คน)</p><div class="chart tall"><canvas id="cAffil"></canvas></div></div>
+        </div>
+        <div class="glass" style="margin-bottom:22px">
+          <div class="page-header" style="margin-bottom:6px;align-items:flex-end"><h3 id="t13Title" style="margin:0">จำนวนสถานศึกษา นักเรียน ห้องเรียน ครูผู้สอน และบุคลากรสายสนับสนุน จำแนกตามสังกัด</h3>
+          <div class="filter-box"><label>ปีการศึกษา<select id="t13Year"></select></label></div></div>
+          <p class="cap" id="t13Cap"></p>
+          <div class="table-wrapper"><table id="t13"></table></div>
+        </div>
+      </section>
+
+      <!-- สถานศึกษาและผู้เรียน -->
+      <section class="page" id="p-schools">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลพื้นฐาน</div><h1 class="page-title">สถานศึกษาและผู้เรียน</h1></div>
+          <div class="filter-box">
+            <label>สังกัด<select id="fGroup"><option value="">ทุกสังกัด</option></select></label>
+            <label>อำเภอ<select id="fDistrict"><option value="">ทุกอำเภอ</option></select></label>
+          </div>
+        </div>
+        <div class="summary-grid" id="scTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3>นักเรียนรายอำเภอ</h3><p class="cap">ปีการศึกษา 2569 (คน)</p><div class="chart tall"><canvas id="cDistrict"></canvas></div></div>
+          <div class="glass"><h3>นักเรียนจำแนกตามระดับการศึกษา</h3><p class="cap">ปีการศึกษา 2569 (คน)</p><div class="chart tall"><canvas id="cLevel"></canvas></div></div>
+        </div>
+        <div class="glass">
+          <h3>รายชื่อสถานศึกษา</h3><p class="cap">เรียงตามจำนวนนักเรียน</p>
+          <input type="search" id="q" placeholder="ค้นหาชื่อหรือรหัสสถานศึกษา" style="margin-bottom:10px">
+          <div class="table-wrapper scroll"><table id="tSchool"></table></div>
+        </div>
+      </section>
+
+      <!-- แผนที่ -->
+      <section class="page" id="p-map">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลพื้นฐาน</div><h1 class="page-title">แผนที่สถานศึกษา</h1></div>
+          <div class="filter-box">
+            <label>ปีการศึกษา<select id="mYear"><option value="69">2569</option><option value="68">2568</option></select></label>
+            <label>สังกัด<select id="mSub"><option value="">ทุกสังกัด</option></select></label>
+            <label>อำเภอ<select id="mDist"><option value="">ทุกอำเภอ</option></select></label>
+            <label>ระบายสีอำเภอตาม<select id="mFill"><option value="st">จำนวนนักเรียน</option><option value="n">จำนวนสถานศึกษา</option><option value="">ไม่ระบายสี</option></select></label>
+            <label class="chk"><input type="checkbox" id="mApprox" checked>แสดงตำแหน่งโดยประมาณ</label>
+          </div>
+        </div>
+        <div class="summary-grid" id="mapTiles"></div>
+        <div class="map-grid">
+          <div class="glass"><h3>ที่ตั้งสถานศึกษา</h3><p class="cap" id="mapCap">ขนาดจุดตามจำนวนนักเรียน · คลิกจุดเพื่อดูรายละเอียด · คลิกอำเภอเพื่อซูม</p><div id="map"></div></div>
+          <div class="glass"><h3>สรุปรายอำเภอ</h3><p class="cap" id="mapDCap"></p><div class="table-wrapper"><table id="tMapD"></table></div></div>
+        </div>
+      </section>
+
+      <!-- อุดมศึกษา -->
+      <section class="page" id="p-higher">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลพื้นฐาน</div><h1 class="page-title">การศึกษาระดับอุดมศึกษา</h1></div>
+          <div class="filter-box"><label>ปีการศึกษา<select id="hYear"></select></label></div>
+        </div>
+        <div class="glass" style="margin-bottom:18px;padding:12px 18px"><p class="cap" id="hNote" style="margin:0"></p></div>
+        <div class="summary-grid" id="hTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3>นักศึกษาจำแนกตามสถาบัน</h3><p class="cap" id="hCap1"></p><div class="chart"><canvas id="cHStu"></canvas></div></div>
+          <div class="glass"><h3>ผู้บริหาร คณาจารย์ และบุคลากรสายสนับสนุน</h3><p class="cap" id="hCap2"></p><div class="chart"><canvas id="cHStaff"></canvas></div></div>
+        </div>
+        <div class="glass"><h3 id="hTblTitle">จำนวนสถานศึกษา นักศึกษา และบุคลากร จำแนกตามสังกัด</h3><p class="cap" id="hSrc"></p><div class="table-wrapper"><table id="tHigher"></table></div></div>
+      </section>
+
+      <!-- ประชากร -->
+      <section class="page" id="p-population">
+        <div class="page-header"><div><div class="breadcrumb">ข้อมูลพื้นฐาน</div><h1 class="page-title">ประชากรวัยเรียน</h1></div></div>
+        <div class="summary-grid" id="popTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3 id="pyrTitle">พีระมิดประชากร</h3><p class="cap">ผู้มีสัญชาติไทยและมีชื่อในทะเบียนบ้าน (คน) · กลุ่มอายุ 5 ปี</p><div class="chart tall"><canvas id="cPyramid"></canvas></div></div>
+          <div class="glass"><h3>แนวโน้มประชากรตามกลุ่มวัย</h3><p class="cap">พ.ศ. 2562–2568 (คน)</p><div class="chart tall"><canvas id="cPopTrend"></canvas></div></div>
+        </div>
+        <div class="glass"><h3>ประชากรวัยเรียนรายช่วงอายุตามดัชนี</h3><p class="cap">ใช้เป็นตัวหารของดัชนีด้านการเข้าถึงโอกาส</p><div class="table-wrapper"><table id="tPopAge"></table></div></div>
+      </section>
+
+      <!-- ดัชนี 5 ด้าน -->
+      <section class="page" id="p-d1"><div class="page-header"><div><div class="breadcrumb">ดัชนีทางการศึกษา ปีงบประมาณ 2569</div><h1 class="page-title">ด้านที่ 1 การเข้าถึงโอกาสทางการศึกษา (Access)</h1></div></div>
+        <div class="glass" style="margin-bottom:22px"><h3>อัตราส่วนผู้เรียนต่อประชากรวัยเรียน</h3><p class="cap">ร้อยละ · ปีก่อนเทียบปีปัจจุบัน · เกิน 100 = มีผู้เรียนนอกช่วงอายุหรือจากนอกจังหวัด</p><div class="chart"><canvas id="cAccess"></canvas></div></div>
+        <div class="idx-grid" id="g1"></div>
+        <div class="charts-grid" style="margin-top:22px">
+          <div class="glass"><h3>ปีการศึกษาเฉลี่ยของประชากรตามกลุ่มอายุ</h3><p class="cap" id="capMys"></p><div class="chart"><canvas id="cMys"></canvas></div></div>
+          <div class="glass"><h3>ระดับการศึกษาของประชากรวัยแรงงาน 15–59 ปี</h3><p class="cap" id="capMysL"></p><div class="chart"><canvas id="cMysL"></canvas></div></div>
+          <div class="glass full"><p class="cap" style="margin:0">ที่มา: สำนักงานสถิติแห่งชาติ การสำรวจภาวะการทำงานของประชากร ไตรมาส 3 (เผยแพร่โดย สกศ.) · เป็นข้อมูลจากการสำรวจกลุ่มตัวอย่าง ค่าระดับจังหวัดมีความคลาดเคลื่อนจากการสุ่ม การเปลี่ยนแปลงระหว่างปีเพียง 0.1–0.2 ปี จึงยังสรุปไม่ได้ว่าเป็นการเปลี่ยนแปลงจริง</p></div>
+        </div></section>
+      <section class="page" id="p-d2"><div class="page-header"><div><div class="breadcrumb">ดัชนีทางการศึกษา ปีงบประมาณ 2569</div><h1 class="page-title">ด้านที่ 2 ความเท่าเทียมทางการศึกษา (Equity)</h1></div></div>
+        <div class="idx-grid" id="g2"></div>
+        <div class="charts-grid" style="margin-top:22px">
+          <div class="glass"><h3>นักเรียนพิการในโรงเรียน สพฐ. จำแนกตามประเภทความพิการ</h3><p class="cap" id="capSN1"></p><div class="chart tall"><canvas id="cSN1"></canvas></div></div>
+          <div class="glass"><h3>ศูนย์การศึกษาพิเศษ ประจำจังหวัดสระบุรี</h3><p class="cap" id="capSN2"></p><div class="chart"><canvas id="cSN2"></canvas></div>
+            <div class="table-wrapper" style="margin-top:14px"><table id="tSN"></table></div></div>
+          <div class="glass full"><p class="cap" style="margin:0" id="capSN3"></p></div>
+          <div class="glass"><h3>เด็กและเยาวชนนอกระบบการศึกษา (TZD) จำแนกตามอำเภอ</h3><p class="cap" id="capTZ1"></p><div class="table-wrapper"><table id="tTZ1"></table></div></div>
+          <div class="glass"><h3>ผลการติดตามเด็กนอกระบบ</h3><p class="cap" id="capTZ2"></p><div class="table-wrapper"><table id="tTZ2"></table></div></div>
+          <div class="glass full"><p class="cap" style="margin:0">ดัชนีที่ 8 = เด็กที่กลับเข้าสู่ระบบการศึกษา ÷ เด็กนอกระบบที่ค้นพบทั้งหมด × 100 · ยังไม่ได้สำรวจรายชื่อส่วนใหญ่ ค่าดัชนีจึงต่ำกว่าความจริง · ปีงบประมาณ 2568 ใช้ช่วงอายุ 6–14 ปี จึงเทียบกันไม่ได้ · ข้อมูลเป็นยอดรวม ไม่มีข้อมูลรายบุคคล</p></div>
+        </div></section>
+      <section class="page" id="p-d3"><div class="page-header"><div><div class="breadcrumb">ดัชนีทางการศึกษา ปีงบประมาณ 2569</div><h1 class="page-title">ด้านที่ 3 คุณภาพทางการศึกษา (Quality)</h1></div></div>
+        <div class="idx-grid" id="g3"></div>
+        <div class="charts-grid">
+          <div class="glass full"><h3>ร้อยละเด็กปฐมวัย 3–5 ปี ที่มีพัฒนาการสมวัย</h3><p class="cap">ปีการศึกษา 2565–2569 · จังหวัดสระบุรีเทียบระดับประเทศ · ข้อมูล HDC กระทรวงสาธารณสุข</p>
+            <div class="chart"><canvas id="cECD"></canvas></div>
+            <div class="table-wrapper" style="margin-top:14px"><table id="tECD"></table></div>
+            <p class="cap" style="margin-top:10px">ร้อยละพัฒนาการสมวัย = เด็กที่มีพัฒนาการสมวัย ÷ เด็กที่ได้รับการคัดกรอง × 100 · ร้อยละการคัดกรอง = เด็กที่ได้รับการคัดกรอง ÷ กลุ่มเป้าหมาย × 100 · ปี 2566 ประมวลผลต่างช่วงเวลา (พ.ย.) จึงเทียบกับปีอื่นไม่ได้โดยตรง</p></div>
+          <div class="glass"><h3>RT ป.1 แนวโน้มคะแนนเฉลี่ยร้อยละ รวม 2 ด้าน</h3><p class="cap" id="capRTt"></p><div class="chart"><canvas id="cRTt"></canvas></div></div>
+          <div class="glass"><h3>NT ป.3 แนวโน้มคะแนนเฉลี่ยร้อยละ รวม 2 ด้าน</h3><p class="cap" id="capNTt"></p><div class="chart"><canvas id="cNTt"></canvas></div></div>
+          <div class="glass"><h3>RT ป.1 จำแนกตามสังกัด</h3><p class="cap" id="capRT"></p><div class="chart"><canvas id="cRT"></canvas></div></div>
+          <div class="glass"><h3>NT ป.3 จำแนกตามสังกัด</h3><p class="cap" id="capNT"></p><div class="chart"><canvas id="cNT"></canvas></div></div>
+          <div class="glass full"><h3>ร้อยละนักเรียนจำแนกตามระดับคุณภาพ</h3><p class="cap" id="capLv"></p><div class="table-wrapper"><table id="tLv"></table></div></div>
+          <div class="glass full"><h3>V-NET ปวช.3 คะแนนเฉลี่ยรายสถานศึกษา</h3><p class="cap" id="capVN"></p><div class="chart tall"><canvas id="cVN"></canvas></div>
+            <div class="table-wrapper" style="margin-top:14px"><table id="tVN"></table></div>
+            <p class="cap" style="margin-top:10px">V-NET = การทดสอบทางการศึกษาระดับชาติด้านอาชีวศึกษา (สทศ.) · ปี 2567 ระดับจังหวัดคำนวณเป็นค่าเฉลี่ยถ่วงน้ำหนักด้วยจำนวนผู้เข้าสอบ · สถานศึกษาที่ไม่มีผู้เข้าสอบไม่แสดงในกราฟ</p></div>
+          <div class="glass full"><h3>O-NET ร้อยละผู้ได้คะแนน 50 ขึ้นไป รายวิชา</h3><p class="cap" id="capON"></p><div class="chart"><canvas id="cONET"></canvas></div></div>
+        </div></section>
+      <section class="page" id="p-d4"><div class="page-header"><div><div class="breadcrumb">ดัชนีทางการศึกษา ปีงบประมาณ 2569</div><h1 class="page-title">ด้านที่ 4 ประสิทธิภาพ (Efficiency)</h1></div></div>
+        <div class="idx-grid" id="g4"></div></section>
+      <section class="page" id="p-d5"><div class="page-header"><div><div class="breadcrumb">ดัชนีทางการศึกษา ปีงบประมาณ 2569</div><h1 class="page-title">ด้านที่ 5 การตอบโจทย์บริบทที่เปลี่ยนแปลง (Relevancy)</h1></div></div>
+        <div class="idx-grid" id="g5"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3>สัดส่วนผู้เรียนอาชีวศึกษา (ปวช.) ต่อผู้เรียน ม.ปลายทั้งหมด</h3><p class="cap">ร้อยละ · ปีการศึกษา 2567–2569</p><div class="chart"><canvas id="cVoc"></canvas></div></div>
+          <div class="glass"><h3>สถานะผู้สำเร็จการศึกษาปีการศึกษา 2568 (ติดตามปี 2569)</h3><p class="cap">ร้อยละของผู้ที่ติดตามได้</p><div class="chart"><canvas id="cOutcome"></canvas></div></div>
+          <div class="glass full"><h3>ภาวะการมีงานทำรายสถานศึกษา</h3><p class="cap">ผู้สำเร็จปีการศึกษา 2568 (คน)</p><div class="table-wrapper scroll"><table id="tVoc"></table></div></div>
+        </div></section>
+
+      <!-- O-NET รายละเอียด (ข้อมูลเพิ่มเติม) -->
+      <section class="page" id="p-onet">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลเพิ่มเติม</div><h1 class="page-title">ผลการทดสอบ O-NET รายละเอียด</h1></div>
+          <div class="filter-box">
+            <label>ระดับชั้น<select id="oGrade"></select></label>
+          </div>
+        </div>
+        <div class="glass" style="margin-bottom:18px;padding:12px 18px"><p class="cap" id="oNote" style="margin:0"></p></div>
+        <div class="summary-grid" id="oTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3>คะแนนเฉลี่ยรายวิชา เทียบภาคและประเทศ</h3><p class="cap" id="oCap1"></p><div class="chart"><canvas id="cOM"></canvas></div></div>
+          <div class="glass"><h3>ร้อยละผู้ได้คะแนน 50 ขึ้นไป เทียบภาคและประเทศ</h3><p class="cap" id="oCap2"></p><div class="chart"><canvas id="cOP"></canvas></div></div>
+        </div>
+        <div class="glass"><h3>ค่าสถิติจำแนกตามระดับการรายงาน</h3><p class="cap" id="oCap3"></p><div class="table-wrapper"><table id="tOS"></table></div></div>
+      </section>
+
+      <!-- อ้างอิง -->
+      <section class="page" id="p-about"><div class="page-header"><div><div class="breadcrumb">อ้างอิง</div><h1 class="page-title">นิยามดัชนีและแหล่งข้อมูล</h1></div></div>
+        <div class="glass" style="margin-bottom:22px"><h3>นิยามและสูตรคำนวณดัชนี</h3><p class="cap">ตามดัชนีทางการศึกษา ประจำปีงบประมาณ พ.ศ. 2569 (สป.ศธ.)</p><div class="table-wrapper"><table id="tDef"></table></div></div>
+        <div class="glass"><h3>แหล่งข้อมูล</h3><p class="cap">ข้อมูลอ้างอิง ณ วันที่ตามที่ระบุ</p><div class="table-wrapper"><table id="tSrc"></table></div></div>
+        <div class="glass survey-card"><div><h3 style="margin:0">ช่วยเราพัฒนาระบบ</h3><p>ตอบแบบประเมินความพึงพอใจและให้ข้อเสนอแนะต่อระบบข้อมูลสารสนเทศ</p></div><a class="btn" href="https://shorturl.moe.go.th/psit2" target="_blank" rel="noopener">ตอบแบบประเมิน</a></div>
+      </section>
+    </div>
+    <footer id="foot"></footer>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const nv = x => x === null || x === undefined || x === '' || (typeof x === 'number' && isNaN(x));  /* ว่าง = null/undefined/'' (google.script.run อาจส่ง null มาเป็น undefined) */
+const fmt = n => nv(n) || isNaN(Number(n)) ? '' : Number(n).toLocaleString('th-TH');
+const f2 = n => nv(n) || isNaN(Number(n)) ? '' : Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const LEVELS = ['เตรียมอนุบาล','เตรียมความพร้อม','ก่อนประถมศึกษา','ประถมศึกษา','มัธยมศึกษาตอนต้น','มัธยมศึกษาตอนปลาย','ปวช.','ปวส.','ปริญญาตรี','กศน.ประถมศึกษา','กศน.มัธยมศึกษาตอนต้น','กศน.มัธยมศึกษาตอนปลาย'];
+const DOMAINS = {'1':'g1','2':'g2','3':'g3','4':'g4','5':'g5'};
+let D, charts = {}, drawn = {};
+
+function load(){
+  if (window.google && google.script && google.script.run){
+    const slow = setTimeout(() => { $('loadSub').textContent = 'ใช้เวลานานกว่าปกติเล็กน้อย ระบบยังทำงานอยู่ กรุณารอสักครู่'; }, 15000);
+    google.script.run.withSuccessHandler(d => { clearTimeout(slow); init(d); }).withFailureHandler(e => { clearTimeout(slow); loadFail(e); }).getDashboardData();
+  } else if (window.EIS_API) {
+    const slow = setTimeout(() => { $('loadSub').textContent = 'ใช้เวลานานกว่าปกติเล็กน้อย ระบบยังทำงานอยู่ กรุณารอสักครู่'; }, 15000);
+    fetch(window.EIS_API, {credentials:'omit', cache:'no-store'})
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(d => { clearTimeout(slow); init(d); })
+      .catch(e => { clearTimeout(slow); loadFail(e); });
+  } else if (window.__DATA__) init(window.__DATA__);
+}
+
+function loadFail(e){
+  $('loadSpin').hidden = true; $('loadTitle').textContent = 'โหลดข้อมูลไม่สำเร็จ'; $('loadTitle').classList.add('load-err');
+  $('loadSub').innerHTML = esc((e && e.message) || 'เกิดข้อผิดพลาดในการเชื่อมต่อ') + '<br><br><button class="btn" id="btnRetry">ลองใหม่อีกครั้ง</button>';
+  $('btnRetry').onclick = () => { $('loadSpin').hidden = false; $('loadTitle').classList.remove('load-err'); $('loadTitle').textContent = 'กำลังโหลดข้อมูล…'; $('loadSub').textContent = 'ระบบกำลังดึงข้อมูลจากฐานข้อมูล'; load(); };
+}
+function init(data){
+  D = data;
+  Chart.defaults.font.family = "'Prompt', 'Sarabun', sans-serif"; Chart.defaults.font.size = 12; Chart.defaults.color = '#475569';
+  $('topMeta').textContent = `ปีการศึกษา ${D.config.year} · ข้อมูล ณ ${D.config.refDate}` + (D.lastUpdate ? ` · ปรับปรุงล่าสุด ${D.lastUpdate}` : '');
+  $('loading').hidden = true; $('p-overview').hidden = false; $('fab').hidden = false;
+  if (D.appUrl) { $('btnFull').href = D.appUrl; $('btnFull').hidden = false; }
+  document.querySelectorAll('.menu-item').forEach(m => m.onclick = () => show(m.dataset.page));
+  [...new Set(D.schools.map(s => s.group))].forEach(g => $('fGroup').add(new Option(g, g)));
+  [...new Set(D.schools.map(s => s.district))].sort((a,b)=>a.localeCompare(b,'th')).forEach(d => $('fDistrict').add(new Option(d, d)));
+  $('fGroup').onchange = $('fDistrict').onchange = $('q').oninput = renderSchools;
+  $('foot').innerHTML = 'แหล่งข้อมูล: ' + D.sources.map(s => `${esc(s.name)} (${esc(s.owner)})`).join(' · ') + `<br>ผู้รับผิดชอบ: ${esc(D.config.contact)}`;
+  show('overview');
+}
+
+function show(page){
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.toggle('active', m.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'p-' + page));
+  if (!drawn[page]) { ({overview:drawOverview, schools:renderSchools, map:drawMap, higher:drawHigher, onet:drawOnet, population:drawPopulation, d1:()=>drawDomain('1'), d2:()=>drawDomain('2'), d3:()=>drawDomain('3'), d4:()=>drawDomain('4'), d5:()=>drawDomain('5'), about:drawAbout})[page](); drawn[page] = page !== 'schools'; }
+  if (page === 'map' && MAP) setTimeout(() => MAP.invalidateSize(), 50);
+  window.scrollTo({top:0});
+}
+
+const tile = (t, v, h, c='') => `<div class="sum-card ${c}"><div class="title">${t}</div><div class="value">${v || '<span class="empty">—</span>'}</div><div class="hint">${h || ''}</div></div>`;
+
+function barChart(id, labels, datasets, opt = {}){
+  if (charts[id]) charts[id].destroy();
+  datasets.forEach(d => Object.assign(d, {borderRadius:4, borderSkipped:'start', maxBarThickness:24, categoryPercentage:.8, barPercentage:.9}));
+  const h = opt.horizontal !== false;
+  charts[id] = new Chart($(id), { type:'bar', data:{labels, datasets},
+    options:{ indexAxis: h ? 'y' : 'x', maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{display: datasets.length > 1, position:'top', align:'start', labels:{boxWidth:12, boxHeight:12, usePointStyle:false}},
+        tooltip:{callbacks:{label:c => `${c.dataset.label}: ${opt.score ? f2(c.raw) + ' คะแนน' : opt.pct ? f2(c.raw) + '%' : fmt(Math.abs(c.raw)) + ' คน'}`}} },
+      scales:{ x:{ stacked:!!opt.stacked, grid:{color: h ? css('--grid') : 'transparent'}, ticks: h ? {callback: v => opt.pct ? v + '%' : fmt(Math.abs(v))} : {}},
+               y:{ stacked:!!opt.stacked, grid:{color: h ? 'transparent' : css('--grid')}, ticks: h ? {} : {callback: v => opt.pct ? v + '%' : fmt(v)}, suggestedMax: opt.max }, ...(h && opt.max ? {} : {}) } } });
+}
+
+/* ---------- ภาพรวม ---------- */
+function sumYears(){ return [...new Set(D.summary.map(r => r.year))].sort((a, b) => b - a); }
+function sumRow(y, sub){ return D.summary.find(r => r.year === y && r.sub === sub) || {}; }
+function drawOverview(){
+  const ys = sumYears(), cy = ys[0], py = ys[1];
+  const tot = sumRow(cy, 'รวม'), ptot = py ? sumRow(py, 'รวม') : {};
+  const act = D.schools.filter(s => s.status === 'มีนักเรียน').length;
+  const popSchool = D.popAges.filter(a => a.age >= 3 && a.age <= 17).reduce((x, a) => x + a.t, 0);
+  $('ovTiles').innerHTML =
+    tile('สถานศึกษา (แห่ง)', fmt(tot.schools), `มีนักเรียน ${fmt(act)} · ไม่มีนักเรียน ${fmt(tot.schools - act)}`) +
+    tile('นักเรียน/นักศึกษา (คน)', fmt(tot.students), !nv(ptot.students) ? `ปี ${py}: ${fmt(ptot.students)} (${tot.students - ptot.students >= 0 ? '+' : ''}${fmt(tot.students - ptot.students)})` : '', 'c-purple') +
+    tile('ห้องเรียน (ห้อง)', fmt(tot.rooms), 'รวมเฉพาะสังกัดที่มีข้อมูล', 'c-green') +
+    tile('ครูผู้สอน (คน)', fmt(tot.teachers), 'รวมเฉพาะสังกัดที่มีข้อมูล', 'c-grey') +
+    tile('ประชากรวัยเรียน 3–17 ปี', fmt(popSchool), `ทะเบียนราษฎร์ ธ.ค. ${D.config.popYear}`);
+  const subs = D.summary.filter(r => r.year === cy && r.sub !== 'รวม').map(r => r.sub);
+  const sets = [];
+  if (py) sets.push({label:String(py), data:subs.map(s => sumRow(py, s).students), backgroundColor:css('--series-2')});
+  sets.push({label:String(cy), data:subs.map(s => sumRow(cy, s).students), backgroundColor:css('--series-1')});
+  barChart('cAffil', subs, sets);
+  $('t13Year').innerHTML = ys.map(y => `<option value="${y}">${y}</option>`).join('');
+  $('t13Year').onchange = renderT13;
+  renderT13();
+}
+const T13 = [
+  [1, '1. กระทรวงศึกษาธิการ (ศธ.)', ['สพป.สระบุรี เขต 1','สพป.สระบุรี เขต 2','สพม.สระบุรี','ศูนย์การศึกษาพิเศษ','สช.เอกชน','สช.นานาชาติ','สอศ.รัฐ','สอศ.เอกชน','สกร.']],
+  [2, '1.1 สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน (สพฐ.)', ['สพป.สระบุรี เขต 1','สพป.สระบุรี เขต 2','สพม.สระบุรี','ศูนย์การศึกษาพิเศษ']],
+  [3, '1) สำนักงานเขตพื้นที่การศึกษาประถมศึกษาสระบุรี เขต 1', ['สพป.สระบุรี เขต 1']],
+  [3, '2) สำนักงานเขตพื้นที่การศึกษาประถมศึกษาสระบุรี เขต 2', ['สพป.สระบุรี เขต 2']],
+  [3, '3) สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาสระบุรี', ['สพม.สระบุรี']],
+  [3, '4) ศูนย์การศึกษาพิเศษ ประจำจังหวัดสระบุรี', ['ศูนย์การศึกษาพิเศษ']],
+  [2, '1.2 สำนักงานคณะกรรมการส่งเสริมการศึกษาเอกชน (สช.)', ['สช.เอกชน','สช.นานาชาติ']],
+  [3, '- โรงเรียนเอกชน', ['สช.เอกชน']],
+  [3, '- โรงเรียนนานาชาติ', ['สช.นานาชาติ']],
+  [2, '1.3 สำนักงานคณะกรรมการการอาชีวศึกษา (สอศ.)', ['สอศ.รัฐ','สอศ.เอกชน']],
+  [3, '- ภาครัฐ', ['สอศ.รัฐ']],
+  [3, '- ภาคเอกชน', ['สอศ.เอกชน']],
+  [2, '1.4 กรมส่งเสริมการเรียนรู้ (สกร.)', ['สกร.']],
+  [3, '- สำนักงานส่งเสริมการเรียนรู้ประจำจังหวัดสระบุรี', ['สกร.']],
+  [1, '2. กระทรวงมหาดไทย (มท.)', ['อบจ.','รร.อปท.','ศพด.']],
+  [2, '2.1 องค์การบริหารส่วนจังหวัดสระบุรี (อบจ.)', ['อบจ.']],
+  [2, '2.2 โรงเรียนสังกัดองค์กรปกครองส่วนท้องถิ่น (อปท.)', ['รร.อปท.']],
+  [2, '2.3 ศูนย์พัฒนาเด็กเล็ก (ศพด.)', ['ศพด.']]
+];
+function renderT13(){
+  const y = Number($('t13Year').value);
+  const R = D.summary.filter(r => r.year === y), tot = R.find(r => r.sub === 'รวม') || {};
+  const F = ['schools', 'students', 'rooms', 'teachers', 'support'];
+  const agg = (subs, f) => { const v = subs.map(s => (R.find(r => r.sub === s) || {})[f]).filter(x => !nv(x)); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+  const c = x => `<td class="n">${nv(x) ? '<span class="empty">–</span>' : fmt(x)}</td>`;
+  const known = new Set(T13.flatMap(t => t[2]));
+  const extra = R.filter(r => r.sub !== 'รวม' && !known.has(r.sub)).map(r => [3, r.sub, [r.sub]]);
+  const rows = T13.concat(extra).map(([lv, lab, subs]) => {
+    const note = subs.length === 1 ? ((R.find(r => r.sub === subs[0]) || {}).note || '') : '';
+    return `<tr class="lv${lv}"><td>${esc(lab)}</td>${F.map(f => c(agg(subs, f))).join('')}<td>${esc(note)}</td></tr>`;
+  });
+  rows.push(`<tr class="total"><td>รวมทุกหน่วยงาน</td>${F.map(f => c(tot[f])).join('')}<td></td></tr>`);
+  $('t13Title').textContent = `ตาราง 13 จำนวนสถานศึกษา นักเรียน/นักศึกษา ห้องเรียน ครูผู้สอน และบุคลากรสายสนับสนุน จำแนกตามสังกัด ปีการศึกษา ${y}`;
+  $('t13Cap').textContent = '– = ไม่มีข้อมูลหรือนับรวมในแถวอื่น · ไม่รวมบุคลากรสำนักงานเขต/สำนักงานจังหวัด · ยอดรวมนับเฉพาะสังกัดที่มีข้อมูล' + (tot.note ? ' · ' + tot.note : '');
+  $('t13').innerHTML = '<thead><tr><th>สังกัด</th><th class="n">สถานศึกษา (แห่ง)</th><th class="n">นักเรียน/นักศึกษา (คน)</th><th class="n">ห้องเรียน (ห้อง)</th><th class="n">ครูผู้สอน (คน)</th><th class="n">บุคลากรสายสนับสนุน (คน)</th><th>หมายเหตุ</th></tr></thead><tbody>' + rows.join('') + '</tbody>';
+}
+
+/* ---------- สถานศึกษาและผู้เรียน ---------- */
+function renderSchools(){
+  const S = D.schools.filter(s => (!$('fGroup').value || s.group === $('fGroup').value) && (!$('fDistrict').value || s.district === $('fDistrict').value));
+  const tot = S.reduce((a, s) => a + s.total, 0), act = S.filter(s => s.status === 'มีนักเรียน').length;
+  $('scTiles').innerHTML = tile('สถานศึกษา (แห่ง)', fmt(S.length), `มีนักเรียน ${fmt(act)}`) +
+    tile('นักเรียน (คน)', fmt(tot), '', 'c-purple') +
+    tile('ชาย (คน)', fmt(S.reduce((a, s) => a + s.male, 0)), '', 'c-green') +
+    tile('หญิง (คน)', fmt(S.reduce((a, s) => a + s.female, 0)), '', 'c-grey');
+  const byD = {}; S.forEach(s => byD[s.district] = (byD[s.district] || 0) + s.total);
+  const dk = Object.keys(byD).sort((a, b) => byD[b] - byD[a]);
+  barChart('cDistrict', dk, [{label:'นักเรียน', data:dk.map(k => byD[k]), backgroundColor:css('--series-1')}]);
+  const byL = {}; S.forEach(s => Object.entries(s.levels).forEach(([k, v]) => byL[k] = (byL[k] || 0) + v));
+  const lk = LEVELS.filter(l => byL[l]);
+  barChart('cLevel', lk, [{label:'นักเรียน', data:lk.map(k => byL[k]), backgroundColor:css('--series-1')}]);
+  const t = $('q').value.trim();
+  const rows = S.filter(s => !t || s.name.includes(t) || s.code.includes(t)).sort((a, b) => b.total - a.total);
+  $('tSchool').innerHTML = '<thead><tr><th>รหัส</th><th>สถานศึกษา</th><th>สังกัด</th><th>อำเภอ</th><th class="n">ชาย</th><th class="n">หญิง</th><th class="n">รวม</th></tr></thead><tbody>' +
+    rows.slice(0, 300).map(s => `<tr><td>${s.code}</td><td>${esc(s.name)}${s.status !== 'มีนักเรียน' ? ' <span class="chip wait">ไม่มีนักเรียน</span>' : ''}</td><td>${esc(s.sub)}</td><td>${esc(s.district)}</td><td class="n">${fmt(s.male)}</td><td class="n">${fmt(s.female)}</td><td class="n">${fmt(s.total)}</td></tr>`).join('') +
+    (rows.length > 300 ? `<tr><td colspan="7" class="empty">แสดง 300 จาก ${fmt(rows.length)} แห่ง — พิมพ์ค้นหาเพื่อจำกัดผล</td></tr>` : '') + '</tbody>';
+}
+
+/* ---------- แผนที่ ---------- */
+let DISTRICTS = {type:"FeatureCollection", features:[]};
+const MGROUPS = [
+  {name:'สพฐ. (สพป./สพม./การศึกษาพิเศษ)', test:s => /^สพป|^สพม|ศึกษาพิเศษ/.test(s.sub), color:'--series-1'},
+  {name:'ท้องถิ่น (โรงเรียน อปท./อบจ./ศพด.)', test:s => /อปท|อบจ|ศพด/.test(s.sub), color:'--series-2'},
+  {name:'เอกชน / อาชีวศึกษา / สกร.', test:() => true, color:'--series-3'}];
+const RAMP = ['#f1f5f9', '#dbe3ec', '#bccada', '#94a8bf', '#6b829e'];
+let MAP, mLayer, dLayer, mSel = '';
+const mGroup = s => MGROUPS.findIndex(g => g.test(s));
+const mVal = (s, y) => y === '68' ? s.st68 : s.total;
+function drawMap(){
+  DISTRICTS = D.districts || DISTRICTS;
+  [...new Set(D.schools.map(s => s.sub))].forEach(g => $('mSub').add(new Option(g, g)));
+  DISTRICTS.features.map(f => f.properties.name).sort((a, b) => a.localeCompare(b, 'th')).forEach(d => $('mDist').add(new Option(d, d)));
+  ['mYear', 'mSub', 'mFill', 'mApprox'].forEach(id => $(id).onchange = renderMap);
+  $('mDist').onchange = () => { mSel = $('mDist').value; renderMap(true); };
+  if (!window.L) { $('map').innerHTML = '<div class="empty" style="padding:30px">โหลดไลบรารีแผนที่ไม่สำเร็จ</div>'; return; }
+  MAP = L.map('map', {zoomSnap:.25, scrollWheelZoom:true, attributionControl:true});
+  /* แผนที่ฐาน: OpenStreetMap (ไม่ต้องใช้ API key) และภาพถ่ายดาวเทียม Esri
+     แยก 'https:/' กับ '/' ไว้ เพราะ Apps Script ตีความเครื่องหมายทับสองตัวติดกันเป็นคอมเมนต์ */
+  const H = 'https:/' + '/';
+  const osm = L.tileLayer(H + '{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, className:'tile-soft',
+    attribution:'&copy; ผู้ร่วมพัฒนา OpenStreetMap · ขอบเขตอำเภอ: OpenGISData-Thailand'}).addTo(MAP);
+  const sat = L.tileLayer(H + 'server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19,
+    attribution:'ภาพถ่าย &copy; Esri, Maxar, Earthstar Geographics · ขอบเขตอำเภอ: OpenGISData-Thailand'});
+  L.control.layers({'แผนที่ถนน': osm, 'ภาพถ่ายดาวเทียม': sat}, null, {position:'topright', collapsed:false}).addTo(MAP);
+  dLayer = L.geoJSON(DISTRICTS, {style:dStyle, onEachFeature:(f, l) => l.on({
+      click:() => { mSel = mSel === f.properties.name ? '' : f.properties.name; $('mDist').value = mSel; renderMap(true); },
+      mouseover:e => e.target.setStyle({weight:2.5, color:'#3730a3'}), mouseout:e => dLayer.resetStyle(e.target)})}).addTo(MAP);
+  mLayer = L.layerGroup().addTo(MAP);
+  const lg = L.control({position:'bottomright'});
+  lg.onAdd = () => { const d = L.DomUtil.create('div', 'map-legend'); d.id = 'mLegend'; return d; };
+  lg.addTo(MAP);
+  MAP.fitBounds(dLayer.getBounds(), {padding:[10, 10]});
+  renderMap();
+}
+let dStats = {};
+function dStyle(f){
+  const k = $('mFill').value, v = (dStats[f.properties.name] || {})[k] || 0;
+  const vals = Object.values(dStats).map(x => x[k] || 0).sort((a, b) => a - b);
+  let c = RAMP[0];
+  if (k && vals.length) { const q = i => vals[Math.min(vals.length - 1, Math.floor(vals.length * i / 5))]; c = RAMP[[1, 2, 3, 4].filter(i => v >= q(i)).length]; }
+  const sel = mSel === f.properties.name;
+  return {color: sel ? '#3730a3' : '#64748b', weight: sel ? 3 : 1.2, fillColor: k ? c : '#ffffff', fillOpacity: k ? .45 : .08, opacity:.9};
+}
+function renderMap(zoom){
+  const y = $('mYear').value, sub = $('mSub').value, ap = $('mApprox').checked;
+  const S = D.schools.filter(s => !nv(s.lat) && (!sub || s.sub === sub) && (y === '69' || !nv(s.st68)));
+  dStats = {}; S.forEach(s => { const d = dStats[s.district] = dStats[s.district] || {n:0, st:0}; d.n++; d.st += mVal(s, y) || 0; });
+  const V = S.filter(s => (!mSel || s.district === mSel));
+  const shown = V.filter(s => ap || s.geo !== 'approx');
+  const tot = V.reduce((a, s) => a + (mVal(s, y) || 0), 0), apx = V.filter(s => s.geo === 'approx').length, zero = V.filter(s => !(mVal(s, y) > 0)).length;
+  $('mapTiles').innerHTML = tile('สถานศึกษา (แห่ง)', fmt(V.length), `มีนักเรียน ${fmt(V.length - zero)} · ไม่มีนักเรียน ${fmt(zero)}${mSel ? ' · อ.' + mSel : ''}`) +
+    tile('นักเรียน (คน)', fmt(tot), `ปีการศึกษา 25${y}`, 'c-purple') +
+    tile('แสดงบนแผนที่ (แห่ง)', fmt(shown.length), apx ? `ตำแหน่งโดยประมาณ ${fmt(apx)} แห่ง (จุดโปร่ง)` : '', 'c-green') +
+    tile('อำเภอ', mSel || 'ทั้งจังหวัด', `${fmt(Object.keys(dStats).length)} อำเภอ`, 'c-grey');
+  if (MAP) {
+    dLayer.setStyle(dStyle);
+    mLayer.clearLayers();
+    const mx = Math.max(1, ...shown.map(s => mVal(s, y) || 0));
+    shown.sort((a, b) => (mVal(b, y) || 0) - (mVal(a, y) || 0)).forEach(s => {
+      const g = MGROUPS[mGroup(s)], col = css(g.color), r = 4 + 11 * Math.sqrt((mVal(s, y) || 0) / mx), hollow = s.geo === 'approx';
+      L.circleMarker([s.lat, s.lon], {radius:r, color: hollow ? col : '#ffffff', weight: hollow ? 2.5 : 1.5, fillColor: hollow ? '#ffffff' : col, fillOpacity: hollow ? .7 : .88})
+        .bindTooltip(esc(s.name), {direction:'top', offset:[0, -r]})
+        .bindPopup(`<div class="pop-t">${esc(s.name)}</div><div class="pop-s">${esc(s.sub)} · ต.${esc(s.tambon)} อ.${esc(s.district)}</div>
+          <div class="pop-g"><span>นักเรียน 2569</span><b>${fmt(s.total)} คน</b><span>ชาย / หญิง</span><b>${fmt(s.male)} / ${fmt(s.female)}</b>
+          <span>นักเรียน 2568</span><b>${nv(s.st68) ? '–' : fmt(s.st68) + ' คน'}</b><span>ครู 2568</span><b>${nv(s.t68) ? '–' : fmt(s.t68) + ' คน'}</b></div>` +
+          (hollow ? `<div class="pop-n">ตำแหน่งโดยประมาณ (ระดับตำบล) — อยู่ระหว่างตรวจสอบพิกัด</div>` : ''))
+        .addTo(mLayer);
+    });
+    if (zoom === true) {
+      const f = DISTRICTS.features.find(f => f.properties.name === mSel);
+      MAP.fitBounds(f ? L.geoJSON(f).getBounds() : dLayer.getBounds(), {padding:[10, 10]});
+    }
+    const k = $('mFill').value, vals = Object.values(dStats).map(x => x[k] || 0).sort((a, b) => a - b);
+    $('mLegend').innerHTML = '<div class="ttl">สังกัด</div>' + MGROUPS.map(g => `<div><span class="lg-dot" style="background:${css(g.color)}"></span>${g.name}</div>`).join('') +
+      `<div><span class="lg-dot hollow"></span>ตำแหน่งโดยประมาณ</div>` +
+      (k ? `<div class="ttl" style="margin-top:6px">${k === 'st' ? 'นักเรียน' : 'สถานศึกษา'}รายอำเภอ</div><div class="lg-ramp">${RAMP.map(c => `<span style="background:${c}"></span>`).join('')}</div><div class="lg-scale"><span>${fmt(vals[0])}</span><span>${fmt(vals[vals.length - 1])}</span></div>` : '');
+  }
+  const rows = Object.entries(dStats).sort((a, b) => b[1].st - a[1].st);
+  $('mapDCap').textContent = `ปีการศึกษา 25${y}${sub ? ' · ' + sub : ''} · คลิกแถวเพื่อซูม`;
+  $('tMapD').innerHTML = '<thead><tr><th>อำเภอ</th><th class="n">สถานศึกษา</th><th class="n">นักเรียน</th></tr></thead><tbody>' +
+    rows.map(([d, v]) => `<tr data-d="${esc(d)}" class="${d === mSel ? 'sel' : ''}"><td>${esc(d)}</td><td class="n">${fmt(v.n)}</td><td class="n">${fmt(v.st)}</td></tr>`).join('') +
+    `<tr class="total"><td>รวม</td><td class="n">${fmt(rows.reduce((a, r) => a + r[1].n, 0))}</td><td class="n">${fmt(rows.reduce((a, r) => a + r[1].st, 0))}</td></tr></tbody>`;
+  $('tMapD').querySelectorAll('tr[data-d]').forEach(tr => tr.onclick = () => { mSel = mSel === tr.dataset.d ? '' : tr.dataset.d; $('mDist').value = mSel; renderMap(true); });
+}
+
+/* ---------- อุดมศึกษา ---------- */
+function drawHigher(){
+  const H = D.higher || [];
+  const years = [...new Set(H.map(r => r.year))].filter(Boolean).sort((a, b) => b - a);
+  $('hYear').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  $('hYear').onchange = renderHigher;
+  if (!years.length) { $('hNote').textContent = 'ยังไม่มีข้อมูลระดับอุดมศึกษา'; return; }
+  renderHigher();
+}
+function renderHigher(){
+  const y = Number($('hYear').value), R = (D.higher || []).filter(r => r.year === y).sort((a, b) => a.order - b.order);
+  const sum = k => R.reduce((a, r) => a + (r[k] || 0), 0), ref = R[0] ? R[0].ref : '';
+  $('hNote').innerHTML = `ข้อมูลปีการศึกษา <b>${y}</b> ณ ${esc(ref)} ตามที่ได้รับความอนุเคราะห์จากหน่วยงาน — ปีข้อมูลต่างจากสถานศึกษาระดับต่ำกว่าอุดมศึกษา (ปีการศึกษา ${D.config.year}) และไม่นับรวมในจำนวนสถานศึกษา ${fmt(D.schools.length)} แห่ง`;
+  const st = sum('students'), sf = sum('staff');
+  $('hTiles').innerHTML = tile('สถาบันอุดมศึกษา (แห่ง)', fmt(sum('n')), `${fmt(new Set(R.map(r => r.ministry)).size)} กระทรวง`) +
+    tile('นักศึกษา (คน)', fmt(st), `ปีการศึกษา ${y}`, 'c-purple') +
+    tile('ผู้บริหาร คณาจารย์ และสายสนับสนุน (คน)', fmt(sf), `ปีการศึกษา ${y}`, 'c-green') +
+    tile('นักศึกษาต่อบุคลากร', sf ? f2(st / sf) + ' : 1' : '', 'คิดจากบุคลากรทุกประเภท', 'c-grey');
+  $('hCap1').textContent = $('hCap2').textContent = `ปีการศึกษา ${y} (คน)`;
+  const PRE = ['วิทยาลัยพยาบาลบรมราชชนนี', 'โรงเรียนนายเรืออากาศ', 'มหาวิทยาลัย'];
+  const lab = R.map(r => { const p = PRE.find(x => r.inst.startsWith(x) && r.inst.length > x.length + 1);
+    return p ? [p, r.inst.slice(p.length).trim()] : r.inst; });
+  barChart('cHStu', lab, [{label:'นักศึกษา', data:R.map(r => r.students), backgroundColor:css('--series-1')}]);
+  barChart('cHStaff', lab, [{label:'บุคลากร', data:R.map(r => r.staff), backgroundColor:css('--series-1')}]);
+  $('hTblTitle').textContent = `จำนวนสถานศึกษา นักศึกษา ผู้บริหาร คณาจารย์ และบุคลากรสายสนับสนุน ระดับอุดมศึกษา จำแนกตามสังกัด ปีการศึกษา ${y}`;
+  $('hSrc').textContent = 'ที่มา: ' + [...new Set(R.map(r => r.src))].join(' · ') + (ref ? ` ข้อมูล ณ วันที่ ${ref}` : '');
+  const mins = [...new Set(R.map(r => r.ministry))]; let i = 0;
+  const td = x => `<td class="n">${x === null || x === undefined ? '' : fmt(x)}</td>`;
+  $('tHigher').innerHTML = '<thead><tr><th>สังกัด</th><th class="n">สถานศึกษา (แห่ง)</th><th class="n">นักศึกษา (คน)</th><th class="n">ผู้บริหาร คณาจารย์ และบุคลากรสายสนับสนุน (คน)</th></tr></thead><tbody>' +
+    mins.map(m => { const g = R.filter(r => r.ministry === m), s = k => g.reduce((a, r) => a + (r[k] || 0), 0);
+      return `<tr class="total"><td>${++i}. ${esc(m)}</td>${td(s('n'))}${td(s('students'))}${td(s('staff'))}</tr>` +
+        g.map(r => `<tr><td style="padding-left:30px">${esc(r.inst)}</td>${td(r.n)}${td(r.students)}${td(r.staff)}</tr>`).join(''); }).join('') +
+    `<tr class="total"><td>รวมทุกหน่วยงาน</td>${td(sum('n'))}${td(st)}${td(sf)}</tr></tbody>`;
+}
+
+/* ---------- ประชากร ---------- */
+function drawPopulation(){
+  const A = D.popAges, sum = (a, b, k = 't') => A.filter(x => x.age >= a && x.age <= b).reduce((s, x) => s + x[k], 0);
+  const all = sum(0, 101);
+  $('popTiles').innerHTML = tile('ประชากรทั้งหมด (คน)', fmt(all), `ธ.ค. ${D.config.popYear}`) +
+    tile('อายุ 3–5 ปี', fmt(sum(3, 5)), 'ปฐมวัย', 'c-purple') + tile('อายุ 6–11 ปี', fmt(sum(6, 11)), 'ประถมศึกษา', 'c-green') +
+    tile('อายุ 12–17 ปี', fmt(sum(12, 17)), 'มัธยมศึกษา', 'c-grey') + tile('อายุ 60 ปีขึ้นไป', fmt(sum(60, 101)), `ร้อยละ ${f2(sum(60, 101) / all * 100)}`);
+  $('pyrTitle').textContent = `พีระมิดประชากร พ.ศ. ${D.config.popYear}`;
+  const groups = []; for (let a = 0; a < 85; a += 5) groups.push([a, a + 4, `${a}–${a + 4}`]); groups.push([85, 101, '85+']);
+  const g = groups.slice().reverse();
+  barChart('cPyramid', g.map(x => x[2]), [
+    {label:'ชาย', data:g.map(x => -sum(x[0], x[1], 'm')), backgroundColor:css('--series-1')},
+    {label:'หญิง', data:g.map(x => sum(x[0], x[1], 'f')), backgroundColor:css('--series-f')}], {stacked:true});
+  const T = D.popTrend;
+  if (charts.cPopTrend) charts.cPopTrend.destroy();
+  charts.cPopTrend = new Chart($('cPopTrend'), {type:'line', data:{labels:T.map(t => t.year), datasets:[
+      {label:'วัยเด็ก 0–14', data:T.map(t => t.child), borderColor:css('--series-1'), backgroundColor:css('--series-1')},
+      {label:'วัยทำงาน 15–59', data:T.map(t => t.work), borderColor:css('--series-2'), backgroundColor:css('--series-2')},
+      {label:'วัยสูงอายุ 60+', data:T.map(t => t.old), borderColor:css('--series-3'), backgroundColor:css('--series-3')}].map(d => Object.assign(d, {borderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0}))},
+    options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+      plugins:{legend:{position:'top', align:'start', labels:{boxWidth:12, boxHeight:12}}, tooltip:{callbacks:{label:c => `${c.dataset.label}: ${fmt(c.raw)} คน`}}},
+      scales:{y:{grid:{color:css('--grid')}, ticks:{callback:v => fmt(v)}}, x:{grid:{display:false}}}}});
+  const bands = [['3–5 ปี', 3, 5, 'ปฐมวัย (ดัชนีที่ 1)'], ['6–11 ปี', 6, 11, 'ประถมศึกษา (ดัชนีที่ 2)'], ['12–14 ปี', 12, 14, 'ม.ต้น (ดัชนีที่ 3)'], ['15–17 ปี', 15, 17, 'ม.ปลาย/ปวช. (ดัชนีที่ 4)'], ['18–19 ปี', 18, 19, 'ปวส. (ดัชนีที่ 5)'], ['15–59 ปี', 15, 59, 'วัยแรงงาน (ดัชนีที่ 6)']];
+  $('tPopAge').innerHTML = '<thead><tr><th>ช่วงอายุ</th><th>ใช้กับ</th><th class="n">ชาย</th><th class="n">หญิง</th><th class="n">รวม</th></tr></thead><tbody>' +
+    bands.map(b => `<tr><td>${b[0]}</td><td>${b[3]}</td><td class="n">${fmt(sum(b[1], b[2], 'm'))}</td><td class="n">${fmt(sum(b[1], b[2], 'f'))}</td><td class="n">${fmt(sum(b[1], b[2]))}</td></tr>`).join('') + '</tbody>';
+}
+
+/* ---------- ดัชนี ---------- */
+function idxCard(rows){
+  const r = rows[0], has = !nv(r.value);
+  const delta = has && !nv(r.prev) ? (r.value - r.prev) : null;
+  return `<div class="glass idx-card"><div class="idx-head"><span class="idx-no">${esc(r.no)}</span><div class="idx-name">${esc(r.name)}</div></div>` +
+    (has ? `<div class="idx-val">${f2(r.value)}<small>${esc(r.unit)}</small></div>` : `<div class="idx-wait">รอข้อมูล</div>`) +
+    `<div>${has ? `<span class="chip">ปีข้อมูล: ${esc(r.dataYear)}</span>` + (String(r.status).indexOf('ค่าตามที่หน่วยงานรายงาน') === 0 ? ` <span class="chip wait">${esc(r.status)}</span>` : '') : `<span class="chip wait">${esc(r.status)}</span>`}</div>` +
+    (!nv(r.prev) ? `<div class="delta">ปีก่อน (${esc(r.prevYear)}): ${f2(r.prev)}${!nv(delta) ? ` · เปลี่ยนแปลง ${delta >= 0 ? '+' : ''}${f2(delta)} ${r.unit === 'ปี' ? 'ปี' : 'จุด'}` : ''}</div>` : '') +
+    (has && !nv(r.num) ? `<div class="idx-meta">ตัวตั้ง ${fmt(r.num)} · ตัวหาร ${fmt(r.den)}</div>` : '') +
+    `<div class="idx-meta">${esc(r.def)}<br>แหล่งข้อมูล: ${esc(r.src)}</div></div>`;
+}
+function onetCard(rows, no, title){
+  const done = rows.some(r => !nv(r.value)), yr = (String(rows[0].dataYear).match(/25\d\d/) || ['ปีล่าสุด'])[0];
+  return `<div class="glass idx-card"><div class="idx-head"><span class="idx-no">${no}</span><div class="idx-name">${title}</div></div>` +
+    (done ? '' : `<div class="idx-wait">รอข้อมูล</div><div><span class="chip wait">${esc(rows[0].status)}</span></div>`) +
+    `<table style="margin-top:6px"><thead><tr><th>วิชา</th><th class="n">${yr}</th><th class="n">${esc(rows[0].prevYear)}</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${esc(r.name.replace(/^O-NET ม\.\d วิชา/, '').replace(/ — .*$/, ''))}</td><td class="n">${nv(r.value) ? '<span class="empty">–</span>' : f2(r.value)}</td><td class="n">${f2(r.prev)}</td></tr>`).join('') +
+    `</tbody></table><div class="idx-meta">${esc(rows[0].def)}<br>แหล่งข้อมูล: ${esc(rows[0].src)}</div></div>`;
+}
+function drawDomain(d){
+  const rows = D.indices.filter(r => r.domain.startsWith(d + '.'));
+  const byNo = {}; rows.forEach(r => (byNo[r.no] = byNo[r.no] || []).push(r));
+  $(DOMAINS[d]).innerHTML = Object.entries(byNo).map(([no, rs]) =>
+    (no === '12' || no === '13') ? onetCard(rs, no, `ร้อยละผู้เรียนที่มีคะแนน O-NET แต่ละวิชาผ่านเกณฑ์ร้อยละ 50 ขึ้นไป ระดับ ${no === '12' ? 'ม.3' : 'ม.6'}`) :
+    rs.map(r => idxCard([r])).join('')).join('');
+  if (d === '1') {
+    const a = rows.filter(r => ['1','2','3','4','5'].includes(r.no));
+    const lab = ['ปฐมวัย 3–5', 'ประถม 6–11', 'ม.ต้น 12–14', 'ม.ปลาย 15–17', 'ปวส. 18–19'];
+    barChart('cAccess', lab, [{label:'ปีก่อน (2568)', data:a.map(r => r.prev), backgroundColor:css('--series-2')},
+      {label:'ปี 2569', data:a.map(r => r.value), backgroundColor:css('--series-1')}], {horizontal:false, pct:true});
+    const M = D.mys || [], my = [...new Set(M.map(m => m.year))].sort();
+    if (my.length) {
+      const AG = ['15-39 ปี', '15-59 ปี', '40-59 ปี', '60 ปีขึ้นไป'];
+      $('capMys').textContent = `จังหวัดสระบุรี พ.ศ. ${my[0]}–${my[my.length - 1]} (ปี) · เส้นหนา = กลุ่มอายุตามดัชนีที่ 6`;
+      if (charts.cMys) charts.cMys.destroy();
+      charts.cMys = new Chart($('cMys'), {type:'line', data:{labels:my, datasets:AG.map((g, i) => ({label:g,
+          data:my.map(y => (M.find(m => m.year === y && m.ind === 'ปีการศึกษาเฉลี่ย' && m.group === g) || {}).value ?? null),
+          borderColor:css(['--series-2', '--series-1', '--series-3', '--series-f'][i]), backgroundColor:css(['--series-2', '--series-1', '--series-3', '--series-f'][i]),
+          borderWidth:g === '15-59 ปี' ? 3 : 2, pointRadius:g === '15-59 ปี' ? 5 : 3, pointHoverRadius:7, tension:0}))},
+        options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+          plugins:{legend:{position:'top', align:'start', labels:{boxWidth:12, boxHeight:12}}, tooltip:{callbacks:{label:c => `${c.dataset.label}: ${f2(c.raw)} ปี`}}},
+          scales:{y:{suggestedMin:4, suggestedMax:12, grid:{color:css('--grid')}}, x:{grid:{display:false}}}}});
+      const LV = ['ต่ำกว่าประถม', 'ประถมศึกษา', 'มัธยมศึกษาตอนต้น', 'มัธยมศึกษาตอนปลาย', 'อุดมศึกษา'];
+      const LC = ['#94a3b8', '#c4b5fd', '#a5b4fc', '#6366f1', '#3730a3'];
+      $('capMysL').textContent = `ร้อยละของประชากร 15–59 ปี จำแนกตามระดับการศึกษาสูงสุด พ.ศ. ${my[0]}–${my[my.length - 1]}`;
+      barChart('cMysL', my.map(String), LV.map((l, i) => ({label:l, data:my.map(y => (M.find(m => m.year === y && m.group === l) || {}).value ?? null), backgroundColor:LC[i]})), {stacked:true, pct:true, max:100});
+    }
+  }
+  if (d === '2') {
+    const S = D.special || [], y = S.length ? Math.max(...S.map(x => x.year)) : null;
+    if (y) {
+      const dm = S.filter(x => x.year === y && x.sys.indexOf('DMC') === 0), sv = S.filter(x => x.year === y && x.sys === 'SET (ศูนย์การศึกษาพิเศษ)');
+      const ty = {}; dm.forEach(x => ty[x.type] = (ty[x.type] || 0) + x.n);
+      const tk = Object.keys(ty).sort((a, b) => ty[b] - ty[a]), dt = dm.reduce((a, x) => a + x.n, 0), st = sv.reduce((a, x) => a + x.n, 0);
+      $('capSN1').textContent = `DMC ณ 10 มิ.ย. ${y} · รวม ${fmt(dt)} คน (เฉพาะ สพป. 2 เขต และ สพม.)`;
+      barChart('cSN1', tk, [{label:'นักเรียน', data:tk.map(k => ty[k]), backgroundColor:css('--series-1')}]);
+      $('capSN2').textContent = `โปรแกรม SET ณ 10 มิ.ย. ${y} · รวม ${fmt(st)} คน จำแนกตามรูปแบบการรับบริการ`;
+      barChart('cSN2', sv.map(x => x.svc.replace(/^รับบริการ(ใน|นอก)ศูนย์ — /, '')), [{label:'นักเรียน', data:sv.map(x => x.n), backgroundColor:css('--series-1')}]);
+      const TB = dm.concat(sv), AF = [...new Set(TB.map(x => x.unit))];
+      const LVs = ['เตรียมความพร้อม', 'อนุบาล', 'ประถมศึกษา', 'มัธยมศึกษาตอนต้น', 'มัธยมศึกษาตอนปลาย'].filter(l => TB.some(x => x.level === l));
+      const c = (a, l) => TB.filter(x => x.unit === a && x.level === l).reduce((s, x) => s + x.n, 0);
+      $('tSN').innerHTML = '<thead><tr><th>หน่วยงาน</th>' + LVs.map(l => `<th class="n">${l}</th>`).join('') + '<th class="n">รวม</th></tr></thead><tbody>' +
+        AF.map(a => `<tr><td>${esc(a)}</td>` + LVs.map(l => `<td class="n">${fmt(c(a, l))}</td>`).join('') + `<td class="n">${fmt(LVs.reduce((s, l) => s + c(a, l), 0))}</td></tr>`).join('') +
+        `<tr class="total"><td>รวม</td>` + LVs.map(l => `<td class="n">${fmt(AF.reduce((s, a) => s + c(a, l), 0))}</td>`).join('') + `<td class="n">${fmt(dt + st)}</td></tr></tbody>`;
+      $('capSN3').textContent = 'ดัชนีที่ 7 คำนวณตามนิยามของ สป.ศธ. (SET ÷ DMC) ซึ่งมีข้อจำกัด: เด็กในศูนย์การศึกษาพิเศษกับเด็กใน DMC เป็นคนละกลุ่ม และเด็กใน DMC ได้รับการศึกษาอยู่แล้วทุกคน ค่าร้อยละจึงไม่ได้สะท้อนสัดส่วนเด็กที่ได้รับการศึกษาจริง · DMC ไม่รวมโรงเรียนเอกชน อปท. อาชีวศึกษา และ สกร. · ประเภท "บกพร่องทางการเรียนรู้" ส่วนใหญ่มาจากการคัดกรองของครู ไม่ใช่การวินิจฉัยทางการแพทย์';
+    }
+    const TZ = D.tzd || [];
+    if (TZ.length) {
+      const ret = x => x.status.indexOf('กลับเข้า') === 0, done = x => x.status !== 'ยังไม่ได้สำรวจ/ดำเนินการ';
+      const tot = TZ.reduce((a, x) => a + x.n, 0), rr = TZ.filter(ret).reduce((a, x) => a + x.n, 0), dd = TZ.filter(done).reduce((a, x) => a + x.n, 0);
+      $('capTZ1').textContent = `ระบบ TZD ข้อมูล ณ 14 ต.ค. 2569 · ค้นพบ ${fmt(tot)} คน · สำรวจ/ติดตามแล้ว ${fmt(dd)} คน (ร้อยละ ${f2(dd / tot * 100)})`;
+      const DS = [...new Set(TZ.map(x => x.district))].sort((a, b) => a.localeCompare(b, 'th'));
+      const s = (f, d) => TZ.filter(x => x.district === d && f(x)).reduce((a, x) => a + x.n, 0);
+      $('tTZ1').innerHTML = '<thead><tr><th>อำเภอ</th><th class="n">ค้นพบ</th><th class="n">สำรวจแล้ว</th><th class="n">กลับเข้าระบบ</th><th class="n">ร้อยละ</th></tr></thead><tbody>' +
+        DS.map(d => { const t = s(() => true, d), r = s(ret, d); return `<tr><td>${esc(d)}</td><td class="n">${fmt(t)}</td><td class="n">${fmt(s(done, d))}</td><td class="n">${fmt(r)}</td><td class="n">${f2(r / t * 100)}</td></tr>`; }).join('') +
+        `<tr class="total"><td>รวม</td><td class="n">${fmt(tot)}</td><td class="n">${fmt(dd)}</td><td class="n">${fmt(rr)}</td><td class="n">${f2(rr / tot * 100)}</td></tr></tbody>`;
+      const st = {}; TZ.forEach(x => st[x.status] = (st[x.status] || 0) + x.n);
+      const ks = Object.keys(st).sort((a, b) => st[b] - st[a]);
+      $('capTZ2').textContent = 'จำแนกตามสถานะล่าสุด (คน)';
+      $('tTZ2').innerHTML = '<thead><tr><th>สถานะ</th><th class="n">จำนวน</th><th class="n">ร้อยละ</th></tr></thead><tbody>' +
+        ks.map(k => `<tr><td>${esc(k)}</td><td class="n">${fmt(st[k])}</td><td class="n">${f2(st[k] / tot * 100)}</td></tr>`).join('') + '</tbody>';
+    }
+  }
+  if (d === '3') {
+    const E = (D.ecd || []).slice().sort((a, b) => a.year - b.year), yrs = [...new Set(E.map(e => e.year))];
+    const pct = e => e && e.screened ? +(e.ok / e.screened * 100).toFixed(2) : null, cov = e => e && e.target ? +(e.screened / e.target * 100).toFixed(2) : null;
+    const pick = (y, a) => E.find(e => e.year === y && e.area === a);
+    if (yrs.length) {
+      if (charts.cECD) charts.cECD.destroy();
+      charts.cECD = new Chart($('cECD'), {type:'line', data:{labels:yrs, datasets:[
+          {label:'จังหวัดสระบุรี', data:yrs.map(y => pct(pick(y, 'จังหวัดสระบุรี'))), borderColor:css('--series-1'), backgroundColor:css('--series-1')},
+          {label:'ประเทศ', data:yrs.map(y => pct(pick(y, 'ประเทศ'))), borderColor:css('--series-2'), backgroundColor:css('--series-2')}].map(d => Object.assign(d, {borderWidth:2, pointRadius:5, pointHoverRadius:7, tension:0}))},
+        options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+          plugins:{legend:{position:'top', align:'start', labels:{boxWidth:12, boxHeight:12}}, tooltip:{callbacks:{label:c => `${c.dataset.label}: ร้อยละ ${f2(c.raw)}`}}},
+          scales:{y:{suggestedMin:90, suggestedMax:100, grid:{color:css('--grid')}, ticks:{callback:v => v + '%'}}, x:{grid:{display:false}}}}});
+      $('tECD').innerHTML = '<thead><tr><th>ปีการศึกษา</th><th class="n">กลุ่มเป้าหมาย</th><th class="n">ได้รับการคัดกรอง</th><th class="n">พัฒนาการสมวัย</th><th class="n">ร้อยละสมวัย (สระบุรี)</th><th class="n">ร้อยละสมวัย (ประเทศ)</th><th class="n">ร้อยละการคัดกรอง (สระบุรี)</th><th>ข้อมูล ณ</th></tr></thead><tbody>' +
+        yrs.map(y => { const s = pick(y, 'จังหวัดสระบุรี') || {}, n = pick(y, 'ประเทศ');
+          return `<tr><td>${y}</td><td class="n">${fmt(s.target)}</td><td class="n">${fmt(s.screened)}</td><td class="n">${fmt(s.ok)}</td><td class="n">${f2(pct(s))}</td><td class="n">${f2(pct(n))}</td><td class="n">${f2(cov(s))}</td><td>${esc(s.ref)}</td></tr>`; }).join('') + '</tbody>';
+    }
+    const Q = D.quality;
+    const ly = t => { const a = Q.filter(q => q.test === t && !nv(q.value)).map(q => Number(q.year)); return a.length ? Math.max(...a) : null; };
+    const yRT = ly('RT'), yNT = ly('NT');
+    const noData = (t, ids) => ids.forEach(c => { $(c).textContent = `ยังไม่มีข้อมูล ${t} ในชีต fact_quality (ตรวจคอลัมน์ การทดสอบ = "${t}" และ ด้าน/วิชา = "รวม 2 ด้าน")`; });
+    const rt = Q.filter(q => q.test === 'RT' && q.subject === 'รวม 2 ด้าน' && Number(q.year) === yRT), nt = Q.filter(q => q.test === 'NT' && q.subject === 'รวม 2 ด้าน' && Number(q.year) === yNT);
+    $('capRT').textContent = `ปีการศึกษา ${yRT} · คะแนนเฉลี่ยร้อยละ รวม 2 ด้าน`; $('capNT').textContent = `ปีการศึกษา ${yNT} · คะแนนเฉลี่ยร้อยละ รวม 2 ด้าน`;
+    const trend = (id, t, capId) => {
+      const yrs = [...new Set(Q.filter(q => q.test === t && !nv(q.value)).map(q => Number(q.year)))].sort();
+      if (!yrs.length) { if (charts[id]) charts[id].destroy(); noData(t, [capId]); return; }
+      $(capId).textContent = `ปีการศึกษา ${yrs[0]}–${yrs[yrs.length - 1]} · จังหวัดเทียบภาคและประเทศ`;
+      if (charts[id]) charts[id].destroy();
+      charts[id] = new Chart($(id), {type:'line', data:{labels:yrs, datasets:['จังหวัด', 'ภาค', 'ประเทศ'].map((u, i) => ({label:u === 'จังหวัด' ? 'จังหวัดสระบุรี' : u,
+          data:yrs.map(y => (Q.find(q => q.test === t && q.unit === u && q.subject === 'รวม 2 ด้าน' && Number(q.year) === y) || {}).value ?? null),
+          borderColor:css('--series-' + (i + 1)), backgroundColor:css('--series-' + (i + 1)), borderWidth:2, pointRadius:5, pointHoverRadius:7, tension:0}))},
+        options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+          plugins:{legend:{position:'top', align:'start', labels:{boxWidth:12, boxHeight:12}}, tooltip:{callbacks:{label:c => `${c.dataset.label}: ${f2(c.raw)}`}}},
+          scales:{y:{suggestedMin:t === 'RT' ? 70 : 45, suggestedMax:t === 'RT' ? 85 : 65, grid:{color:css('--grid')}}, x:{grid:{display:false}}}}});
+    };
+    trend('cRTt', 'RT', 'capRTt'); trend('cNTt', 'NT', 'capNTt');
+    const LV = D.levels || [], LN = ['ดีมาก', 'ดี', 'พอใช้', 'ปรับปรุง'];
+    if (LV.length) {
+      const yl = Math.max(...LV.map(l => l.year)), rowsL = [...new Set(LV.filter(l => l.year === yl).map(l => l.test + '|' + l.domain))];
+      $('capLv').textContent = `ปีการศึกษา ${yl} · ระดับจังหวัด (ไม่รวมเด็กพิเศษและ Walk-in)`;
+      $('tLv').innerHTML = '<thead><tr><th>การทดสอบ</th><th>ด้าน</th>' + LN.map(n => `<th class="n">${n}</th>`).join('') + '</tr></thead><tbody>' +
+        rowsL.map(k => { const [t, d] = k.split('|'); return `<tr><td>${t === 'RT' ? 'RT ป.1' : 'NT ป.3'}</td><td>${esc(d)}</td>` +
+          LN.map(n => { const x = LV.find(l => l.year === yl && l.test === t && l.domain === d && l.level === n) || {}; return `<td class="n">${f2(x.pct)}<br><span class="idx-meta">${fmt(x.n)} คน</span></td>`; }).join('') + '</tr>'; }).join('') + '</tbody>';
+    }
+    const VN = D.vnet || [];
+    if (VN.length) {
+      const yv = Math.max(...VN.map(v => v.year)), comps = [...new Set(VN.map(v => v.comp))];
+      const sch = [...new Set(VN.filter(v => v.year === yv && v.lvl === 'สถานศึกษา' && v.n > 0).map(v => v.name))];
+      $('capVN').textContent = `ปีการศึกษา ${yv} · ระดับ ปวช.3 · คะแนนเต็ม 100`;
+      barChart('cVN', sch, comps.map((c, i) => ({label:c.replace('สมรรถนะ', ''), data:sch.map(s => (VN.find(v => v.year === yv && v.name === s && v.comp === c) || {}).mean ?? null), backgroundColor:css('--series-' + (i + 1))})), {score:true, max:100});
+      const yrsV = [...new Set(VN.map(v => v.year))].sort(), lv = ['จังหวัด', 'ภาค', 'ประเทศ'];
+      $('tVN').innerHTML = '<thead><tr><th>ระดับ</th><th>ปีการศึกษา</th><th class="n">ผู้เข้าสอบ</th>' + comps.map(c => `<th class="n">${esc(c.replace('สมรรถนะ', ''))}</th>`).join('') + '</tr></thead><tbody>' +
+        lv.flatMap(l => yrsV.map(y => { const r = VN.filter(v => v.lvl === l && v.year === y); if (!r.length) return '';
+          return `<tr><td>${l === 'จังหวัด' ? 'จังหวัดสระบุรี' : l}</td><td>${y}</td><td class="n">${fmt(r[0].n)}</td>` + comps.map(c => `<td class="n">${f2((r.find(v => v.comp === c) || {}).mean)}</td>`).join('') + '</tr>'; })).join('') + '</tbody>';
+    }
+    const UO = ['จังหวัด', 'ภาค', 'ประเทศ', 'สพฐ.', 'สช.', 'สถ.'], uo = q => { const i = UO.indexOf(q.unit); return i < 0 ? 99 : i; };
+    rt.sort((a, b) => uo(a) - uo(b)); nt.sort((a, b) => uo(a) - uo(b));
+    if (rt.length) barChart('cRT', rt.map(q => q.unit), [{label:'RT', data:rt.map(q => q.value), backgroundColor:css('--series-1')}], {pct:true, max:100}); else noData('RT', ['capRT']);
+    if (nt.length) barChart('cNT', nt.map(q => q.unit), [{label:'NT', data:nt.map(q => q.value), backgroundColor:css('--series-1')}], {pct:true, max:100}); else noData('NT', ['capNT']);
+    const on = Q.filter(q => q.test === 'O-NET' && q.unit === 'จังหวัด' && q.grade !== 'ป.6');  /* หน้าดัชนีแสดงเฉพาะ ม.3/ม.6 ตามดัชนีที่ 12–13 */
+    const oy = [...new Set(on.map(q => Number(q.year)))].sort().slice(-2);
+    const ocat = [...new Set(on.map(q => q.grade + '|' + q.subject))].sort();
+    $('capON').textContent = `ระดับจังหวัด · ปีการศึกษา ${oy.join(' เทียบ ')} · ร้อยละของผู้เข้าสอบรายวิชา`;
+    barChart('cONET', ocat.map(k => { const [g, s] = k.split('|'); return [g, s.replace('สังคมศึกษา ศาสนาและวัฒนธรรม', 'สังคมศึกษาฯ')]; }),
+      oy.map((y, i) => ({label:'ปีการศึกษา ' + y, data:ocat.map(k => { const [g, s] = k.split('|'); const x = on.find(q => q.grade === g && q.subject === s && Number(q.year) === y); return x && !nv(x.value) ? x.value : null; }),
+        backgroundColor:css(i === oy.length - 1 ? '--series-1' : '--series-2')})), {horizontal:false, pct:true});
+  }
+  if (d === '5') {
+    const v = rows.find(r => r.no === '17') || {};
+    if (charts.cVoc) charts.cVoc.destroy();
+    charts.cVoc = new Chart($('cVoc'), {type:'line', data:{labels:['2567','2568','2569'], datasets:[{label:'ร้อยละ', data:[37.54, v.prev, v.value], borderColor:css('--series-1'), backgroundColor:css('--series-1'), borderWidth:2, pointRadius:5, pointHoverRadius:7, tension:0}]},
+      options:{maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c => `ร้อยละ ${f2(c.raw)}`}}}, scales:{y:{suggestedMin:0, suggestedMax:50, grid:{color:css('--grid')}, ticks:{callback:x => x + '%'}}, x:{grid:{display:false}}}}});
+    const L = ['ปวช.', 'ปวส.'], agg = l => D.voc.filter(x => x.level === l).reduce((a, x) => ({f:a.f + x.followed, s:a.s + x.study, w:a.w + x.work, u:a.u + x.wait}), {f:0, s:0, w:0, u:0});
+    const A = L.map(agg), p = (x, k) => x.f ? +(x[k] / x.f * 100).toFixed(2) : null;
+    barChart('cOutcome', L, [{label:'ศึกษาต่อ', data:A.map(x => p(x, 's')), backgroundColor:css('--series-1')},
+      {label:'มีงานทำ', data:A.map(x => p(x, 'w')), backgroundColor:css('--series-2')},
+      {label:'รองาน/ว่างงาน', data:A.map(x => p(x, 'u')), backgroundColor:css('--series-3')}], {horizontal:false, pct:true});
+    $('tVoc').innerHTML = '<thead><tr><th>สถานศึกษา</th><th>ระดับ</th><th class="n">ผู้สำเร็จ</th><th class="n">ติดตามได้</th><th class="n">ศึกษาต่อ</th><th class="n">มีงานทำ</th><th class="n">รองาน</th><th class="n">ร้อยละมีงานทำ</th></tr></thead><tbody>' +
+      D.voc.map(x => `<tr><td>${esc(x.school)}</td><td>${x.level}</td><td class="n">${fmt(x.grad)}</td><td class="n">${fmt(x.followed)}</td><td class="n">${fmt(x.study)}</td><td class="n">${fmt(x.work)}</td><td class="n">${fmt(x.wait)}</td><td class="n">${x.followed ? f2(x.work / x.followed * 100) : ''}</td></tr>`).join('') + '</tbody>';
+  }
+}
+
+/* ---------- O-NET รายละเอียด (ข้อมูลเพิ่มเติม) ---------- */
+const OSUB = {'สำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน':'สพฐ. (รวม)', 'สำนักงานเขตพื้นที่การศึกษาประถมศึกษา (สพป.)':'สพป.',
+  'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษา (สพม.)':'สพม.', 'สำนักงานคณะกรรมการส่งเสริมการศึกษาเอกชน':'สช.',
+  'กรมส่งเสริมการปกครองท้องถิ่น':'อปท.', 'ศึกษาธิการ':'กระทรวงศึกษาธิการ'};
+const OLV = {'ระดับประเทศ':'ประเทศ', 'ระดับกระทรวง':'กระทรวง', 'ระดับภาค (ภูมิศาสตร์)':'ภาค', 'ระดับศธ.ภาค':'ศธ.ภาค', 'ระดับจังหวัด':'จังหวัด',
+  'ระดับสังกัด (ภายในจังหวัด)':'สังกัด', 'ระดับขนาดโรงเรียน':'ขนาดโรงเรียน', 'ระดับที่ตั้งโรงเรียน':'ที่ตั้งโรงเรียน'};
+const OSJ = ['ภาษาไทย', 'สังคมศึกษา ศาสนาและวัฒนธรรม', 'ภาษาอังกฤษ', 'คณิตศาสตร์', 'วิทยาศาสตร์'];
+const sj = x => x.replace('สังคมศึกษา ศาสนาและวัฒนธรรม', 'สังคมศึกษาฯ');
+function drawOnet(){
+  const S = D.onetStat || [];
+  if (!S.length) { $('oNote').textContent = 'ยังไม่มีข้อมูล O-NET รายละเอียด'; return; }
+  const G = ['ป.6', 'ม.3', 'ม.6'].filter(g => S.some(x => x.grade === g));
+  $('oGrade').innerHTML = G.map(g => `<option>${g}</option>`).join('');
+  $('oGrade').value = G.includes('ม.3') ? 'ม.3' : G[0];
+  $('oGrade').onchange = renderOnet;
+  renderOnet();
+}
+function renderOnet(){
+  const g = $('oGrade').value, y = Math.max(...D.onetStat.map(x => x.year));
+  const S = D.onetStat.filter(x => x.grade === g && x.year === y), subs = OSJ.filter(s => S.some(x => x.subject === s));
+  const at = (lv, s, sub) => S.find(x => x.level === lv && x.subject === s && (sub === undefined || x.sub === sub)) || {};
+  const book = g === 'ป.6' ? 'ระดับ ป.6 ไม่อยู่ในดัชนีทางการศึกษา' : `ในเล่มรายงานเฉพาะดัชนีที่ ${g === 'ม.3' ? '12' : '13'} (ร้อยละผู้ได้คะแนน 50 ขึ้นไป ระดับจังหวัด)`;
+  $('oNote').innerHTML = `<b>ข้อมูลเพิ่มเติม</b> ผลสอบปีการศึกษา ${y} ชั้น ${g} จาก สทศ. · ${book} · หน้านี้แสดงค่าสถิติภาพรวมตามที่ สทศ. รายงาน`;
+  $('oTiles').innerHTML = subs.map((s, i) => { const p = at('ระดับจังหวัด', s), n = at('ระดับประเทศ', s), d = nv(p.mean) || nv(n.mean) ? null : p.mean - n.mean;
+    return tile(esc(sj(s)), f2(p.mean), `ประเทศ ${f2(n.mean)}${d === null ? '' : ` (${d >= 0 ? '+' : ''}${f2(d)})`} · ได้ 50 ขึ้นไป ${f2(p.pct)}%`, ['', 'c-purple', 'c-green', 'c-grey', ''][i]); }).join('');
+  const U = [['ระดับจังหวัด', 'จังหวัดสระบุรี'], ['ระดับภาค (ภูมิศาสตร์)', 'ภาคกลาง'], ['ระดับประเทศ', 'ประเทศ']];
+  $('oCap1').textContent = `ชั้น ${g} ปีการศึกษา ${y} · คะแนนเต็ม 100`;
+  $('oCap2').textContent = `ชั้น ${g} ปีการศึกษา ${y} · ร้อยละของผู้เข้าสอบรายวิชา`;
+  barChart('cOM', subs.map(sj), U.map((u, i) => ({label:u[1], data:subs.map(s => at(u[0], s).mean ?? null), backgroundColor:css('--series-' + (i + 1))})), {horizontal:false, score:true});
+  barChart('cOP', subs.map(sj), U.map((u, i) => ({label:u[1], data:subs.map(s => at(u[0], s).pct ?? null), backgroundColor:css('--series-' + (i + 1))})), {horizontal:false, pct:true});
+  const keys = [...new Map(S.map(x => [x.level + '|' + x.sub, x])).values()];
+  $('oCap3').textContent = `ชั้น ${g} ปีการศึกษา ${y} · แต่ละช่อง = คะแนนเฉลี่ย / ร้อยละผู้ได้ 50 ขึ้นไป / จำนวนผู้เข้าสอบ`;
+  $('tOS').innerHTML = '<thead><tr><th>ระดับการรายงาน</th><th>หน่วย</th>' + subs.map(s => `<th class="n">${esc(sj(s))}</th>`).join('') + '</tr></thead><tbody>' +
+    keys.map(k => `<tr class="${k.level === 'ระดับจังหวัด' ? 'total' : ''}"><td>${esc(OLV[k.level] || k.level)}</td><td>${esc(OSUB[k.sub] || k.sub)}</td>` +
+      subs.map(s => { const x = at(k.level, s, k.sub); return `<td class="n">${f2(x.mean)}<br><span class="idx-meta">${f2(x.pct)}% · ${fmt(x.n)} คน</span></td>`; }).join('') + '</tr>').join('') + '</tbody>';
+}
+/* ---------- อ้างอิง ---------- */
+function drawAbout(){
+  $('tDef').innerHTML = '<thead><tr><th>ที่</th><th>ดัชนี</th><th>นิยาม/สูตร</th><th>ปีข้อมูล</th><th>แหล่งข้อมูล</th></tr></thead><tbody>' +
+    D.indices.map(r => `<tr><td>${esc(r.no)}</td><td>${esc(r.name)}</td><td>${esc(r.def)}</td><td>${esc(r.dataYear)}</td><td>${esc(r.src)}</td></tr>`).join('') + '</tbody>';
+  $('tSrc').innerHTML = '<thead><tr><th>แหล่งข้อมูล</th><th>เจ้าของข้อมูล</th><th>ข้อมูล ณ วันที่</th></tr></thead><tbody>' +
+    D.sources.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.owner)}</td><td>${esc(s.ref)}</td></tr>`).join('') + '</tbody>';
+}
+load();
+</script>
+</body>
+</html>
