@@ -1009,7 +1009,7 @@ function renderSizeList(){
 /* ---------- N-NET (ข้อมูลเพิ่มเติม) ---------- */
 const NLV = ['ประถมศึกษา', 'มัธยมศึกษาตอนต้น', 'มัธยมศึกษาตอนปลาย'], NAVG = 'เฉลี่ย 5 สาระ';
 const NSCOPE = [['จังหวัด', 'จังหวัดสระบุรี'], ['ภาค', 'ภาค'], ['ประเทศ', 'ประเทศ']];
-function nTier(v){ const t = D.config.nnetTarget || {}; if (nv(v)) return ['', '']; if (!nv(t.high) && v >= t.high) return ['t-high', 'ขั้นสูง']; if (!nv(t.std) && v >= t.std) return ['t-std', 'ขั้นมาตรฐาน']; if (!nv(t.base) && v >= t.base) return ['t-base', 'ขั้นต้น']; return ['t-none', 'ยังไม่ถึงขั้นต้น']; }
+function nTier(v){ const t = D.config.nnetTarget || {}; if (nv(v) || (nv(t.high) && nv(t.std) && nv(t.base))) return ['', '']; if (!nv(t.high) && v >= t.high) return ['t-high', 'ขั้นสูง']; if (!nv(t.std) && v >= t.std) return ['t-std', 'ขั้นมาตรฐาน']; if (!nv(t.base) && v >= t.base) return ['t-base', 'ขั้นต้น']; return ['t-none', 'ยังไม่ถึงขั้นต้น']; }
 function drawNnet(){
   const N = D.nnet || [];
   if (!N.length) { $('nNote').textContent = 'ยังไม่มีข้อมูล N-NET'; return; }
@@ -1022,13 +1022,13 @@ function renderNnet(){
   const avg3 = (scope, unit) => { const v = NLV.map(l => get(scope, unit, l, NAVG)).filter(x => !nv(x)); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 100 + 1e-6) / 100 : null; };
   const val = (scope, unit) => lv ? get(scope, unit, lv, NAVG) : avg3(scope, unit);
   const units = [...new Set(N.filter(n => n.year === y && n.scope === 'สกร.อำเภอ').map(n => n.unit))].sort((a, b) => a.localeCompare(b, 'th'));
-  $('nNote').innerHTML = `<b>ข้อมูลเพิ่มเติม</b> ผลการทดสอบ N-NET ครั้งที่ ${esc(r)} ปีการศึกษา ${y} (สทศ.) ของผู้เรียนสถานศึกษาสังกัด สกร.จังหวัดสระบุรี · ไม่อยู่ใน 18 ดัชนี · เป้าหมายตามที่ สกร.จังหวัดกำหนด: ขั้นสูง ${f2(t.high)} · ขั้นมาตรฐาน ${f2(t.std)} · ขั้นต้น ${f2(t.base)} คะแนน`;
+  $('nNote').innerHTML = `<b>ข้อมูลเพิ่มเติม</b> ผลการทดสอบ N-NET ครั้งที่ ${esc(r)} ปีการศึกษา ${y} (สทศ.) ของผู้เรียนสถานศึกษาสังกัด สกร.จังหวัดสระบุรี · ไม่อยู่ใน 18 ดัชนี · ` + (nv(t.high) ? 'ยังไม่ได้กำหนดค่าเป้าหมายในชีท config (NNET_เป้าหมายขั้นสูง / ขั้นมาตรฐาน / ขั้นต้น)' : `เป้าหมายตามที่ สกร.จังหวัดกำหนด (ใช้กับคะแนนเฉลี่ย 3 ระดับ): ขั้นสูง ${f2(t.high)} · ขั้นมาตรฐาน ${f2(t.std)} · ขั้นต้น ${f2(t.base)} คะแนน`);
   const pv = val('จังหวัด', null), rv = val('ภาค', null), cv = val('ประเทศ', null), tp = nTier(pv);
   const reach = units.filter(u => nTier(val('สกร.อำเภอ', u))[0] === 't-high').length, have = units.filter(u => !nv(val('สกร.อำเภอ', u))).length;
   const d = (a, b) => nv(a) || nv(b) ? '' : ` (${a - b >= 0 ? '+' : ''}${f2(a - b)})`;
-  $('nTiles').innerHTML = tile(lv ? `คะแนนเฉลี่ย 5 สาระ ${lv}` : 'คะแนนเฉลี่ย 3 ระดับการศึกษา', f2(pv), `จังหวัดสระบุรี · ระดับเป้าหมาย: ${tp[1]}`) +
+  $('nTiles').innerHTML = tile(lv ? `คะแนนเฉลี่ย 5 สาระ ${lv}` : 'คะแนนเฉลี่ย 3 ระดับการศึกษา', f2(pv), `จังหวัดสระบุรี · ระดับเป้าหมาย: ${tp[1] || 'ยังไม่ได้กำหนดเป้าหมาย'}`) +
     tile('ระดับภาค', f2(rv), 'จังหวัดเทียบภาค' + d(pv, rv), 'c-purple') + tile('ระดับประเทศ', f2(cv), 'จังหวัดเทียบประเทศ' + d(pv, cv), 'c-green') +
-    tile('สกร.อำเภอที่ถึงเป้าหมายขั้นสูง', `${fmt(reach)} / ${fmt(have)}`, `เกณฑ์ ${f2(t.high)} คะแนนขึ้นไป`, 'c-grey');
+    tile('สกร.อำเภอที่ถึงเป้าหมายขั้นสูง', nv(t.high) ? '' : `${fmt(reach)} / ${fmt(have)}`, nv(t.high) ? 'ยังไม่ได้กำหนดเป้าหมาย' : `เกณฑ์ ${f2(t.high)} คะแนนขึ้นไป`, 'c-grey');
   if (lv) {
     const SJ = [...new Set(N.filter(n => n.level === lv && n.subject !== NAVG).map(n => n.subject))];
     $('nT1').textContent = 'คะแนนเฉลี่ยรายสาระ เทียบภาคและประเทศ'; $('nCap1').textContent = `${lv} · ครั้งที่ ${r}/${y} · คะแนนเต็ม 100`;
