@@ -99,6 +99,8 @@
   .idx-meta{font-size:12px;color:var(--text-soft);line-height:1.55}
   .chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:600;background:rgba(99,102,241,.1);color:#4338ca;margin-right:6px}
   .chip.wait{background:rgba(100,116,139,.12);color:#475569}
+  .dpos{color:#4338ca;font-weight:600}.dneg{color:#c2410c;font-weight:600}
+  #tV1 td.n small{display:block;color:var(--text-soft);font-size:11px}
   .chip.t-high{background:rgba(27,175,122,.14);color:#0f766e}.chip.t-std{background:rgba(99,102,241,.12);color:#4338ca}.chip.t-base{background:rgba(235,104,52,.14);color:#b45309}.chip.t-none{background:rgba(100,116,139,.12);color:#475569}
   .size-rule{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
   .size-rule .sr{padding:12px 14px;border-radius:14px;background:var(--glass-bg-card);border:1px solid var(--glass-border);border-top:4px solid var(--c)}
@@ -201,6 +203,7 @@
       <li class="menu-group-label">ข้อมูลเพิ่มเติม</li>
       <li class="menu-item" data-page="onet">O-NET รายละเอียด</li>
       <li class="menu-item" data-page="nnet">N-NET การศึกษานอกระบบ</li>
+      <li class="menu-item" data-page="vnet">V-NET อาชีวศึกษา</li>
       <li class="menu-group-label">อ้างอิง</li>
       <li class="menu-item" data-page="about">นิยามและแหล่งข้อมูล</li>
       <li class="menu-group-label">ความคิดเห็นของท่าน</li>
@@ -357,9 +360,6 @@
           <div class="glass"><h3>RT ป.1 จำแนกตามสังกัด</h3><p class="cap" id="capRT"></p><div class="chart"><canvas id="cRT"></canvas></div></div>
           <div class="glass"><h3>NT ป.3 จำแนกตามสังกัด</h3><p class="cap" id="capNT"></p><div class="chart"><canvas id="cNT"></canvas></div></div>
           <div class="glass full"><h3>ร้อยละนักเรียนจำแนกตามระดับคุณภาพ</h3><p class="cap" id="capLv"></p><div class="table-wrapper"><table id="tLv"></table></div></div>
-          <div class="glass full"><h3>V-NET ปวช.3 คะแนนเฉลี่ยรายสถานศึกษา</h3><p class="cap" id="capVN"></p><div class="chart tall"><canvas id="cVN"></canvas></div>
-            <div class="table-wrapper" style="margin-top:14px"><table id="tVN"></table></div>
-            <p class="cap" style="margin-top:10px">V-NET = การทดสอบทางการศึกษาระดับชาติด้านอาชีวศึกษา (สทศ.) · ปี 2567 ระดับจังหวัดคำนวณเป็นค่าเฉลี่ยถ่วงน้ำหนักด้วยจำนวนผู้เข้าสอบ · สถานศึกษาที่ไม่มีผู้เข้าสอบไม่แสดงในกราฟ</p></div>
           <div class="glass full"><h3>O-NET ร้อยละผู้ได้คะแนน 50 ขึ้นไป รายวิชา</h3><p class="cap" id="capON"></p><div class="chart"><canvas id="cONET"></canvas></div></div>
         </div></section>
       <section class="page" id="p-d4"><div class="page-header"><div><div class="breadcrumb">ดัชนีทางการศึกษา ปีงบประมาณ 2569</div><h1 class="page-title">ด้านที่ 4 ประสิทธิภาพ (Efficiency)</h1></div></div>
@@ -402,6 +402,27 @@
           <div class="glass"><h3>คะแนนเฉลี่ยราย สกร.อำเภอ</h3><p class="cap" id="nCap2"></p><div class="chart tall"><canvas id="cND"></canvas></div></div>
         </div>
         <div class="glass"><h3>ผลการทดสอบราย สกร.อำเภอ และระดับเป้าหมาย</h3><p class="cap" id="nCap3"></p><div class="table-wrapper"><table id="tNN"></table></div></div>
+      </section>
+
+      <!-- V-NET -->
+      <section class="page" id="p-vnet">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลเพิ่มเติม</div><h1 class="page-title">ผลการทดสอบ V-NET อาชีวศึกษา (ปวช.3)</h1></div>
+          <div class="filter-box">
+            <label>ปีการศึกษา<select id="vYear"></select></label>
+            <label>สมรรถนะ<select id="vComp"></select></label>
+          </div>
+        </div>
+        <div class="glass" style="margin-bottom:18px;padding:12px 18px"><p class="cap" id="vNote" style="margin:0"></p></div>
+        <div class="summary-grid" id="vTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3>คะแนนเฉลี่ยรายสมรรถนะ เทียบภาคและประเทศ</h3><p class="cap" id="vCap1"></p><div class="chart"><canvas id="cV1"></canvas></div></div>
+          <div class="glass"><h3>แนวโน้มคะแนนเฉลี่ยระดับจังหวัด</h3><p class="cap" id="vCap2"></p><div class="chart"><canvas id="cV2"></canvas></div></div>
+          <div class="glass"><h3 id="vT3">คะแนนเฉลี่ยรายสถานศึกษา</h3><p class="cap" id="vCap3"></p><div class="chart tall"><canvas id="cV3"></canvas></div></div>
+          <div class="glass"><h3>ผลต่างจากค่าเฉลี่ยจังหวัด</h3><p class="cap" id="vCap4"></p><div class="chart tall"><canvas id="cV4"></canvas></div></div>
+        </div>
+        <div class="glass" style="margin-bottom:22px"><h3 id="vTblT">ผลการทดสอบรายสถานศึกษา</h3><p class="cap" id="vCap5"></p><div class="table-wrapper"><table id="tV1"></table></div></div>
+        <div class="glass"><h3>เปรียบเทียบระดับจังหวัด ภาค และประเทศ รายปี</h3><p class="cap" id="vCap6"></p><div class="table-wrapper"><table id="tV2"></table></div></div>
       </section>
 
       <!-- อ้างอิง -->
@@ -449,7 +470,7 @@ function init(data){
   Chart.defaults.font.family = "'Prompt', 'Sarabun', sans-serif"; Chart.defaults.font.size = 12; Chart.defaults.color = '#475569';
   $('topMeta').textContent = `ปีการศึกษา ${D.config.year} · ข้อมูล ณ ${D.config.refDate}` + (D.lastUpdate ? ` · ปรับปรุงล่าสุด ${D.lastUpdate}` : '');
   $('loading').hidden = true; $('p-overview').hidden = false; $('fab').hidden = false;
-  if (D.appUrl) { $('btnFull').href = D.appUrl; $('btnFull').hidden = false; }
+  { const full = window.EIS_API ? location.href.split('#')[0].split('?')[0] : D.appUrl; if (full) { $('btnFull').href = full; $('btnFull').hidden = false; } }
   document.querySelectorAll('.menu-item').forEach(m => m.onclick = () => show(m.dataset.page));
   [...new Set(D.schools.map(s => s.group))].forEach(g => $('fGroup').add(new Option(g, g)));
   [...new Set(D.schools.map(s => s.district))].sort((a,b)=>a.localeCompare(b,'th')).forEach(d => $('fDistrict').add(new Option(d, d)));
@@ -461,7 +482,7 @@ function init(data){
 function show(page){
   document.querySelectorAll('.menu-item').forEach(m => m.classList.toggle('active', m.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'p-' + page));
-  if (!drawn[page]) { ({overview:drawOverview, schools:renderSchools, size:drawSize, nnet:drawNnet, map:drawMap, higher:drawHigher, onet:drawOnet, population:drawPopulation, d1:()=>drawDomain('1'), d2:()=>drawDomain('2'), d3:()=>drawDomain('3'), d4:()=>drawDomain('4'), d5:()=>drawDomain('5'), about:drawAbout})[page](); drawn[page] = page !== 'schools'; }
+  if (!drawn[page]) { ({overview:drawOverview, schools:renderSchools, size:drawSize, nnet:drawNnet, vnet:drawVnet, map:drawMap, higher:drawHigher, onet:drawOnet, population:drawPopulation, d1:()=>drawDomain('1'), d2:()=>drawDomain('2'), d3:()=>drawDomain('3'), d4:()=>drawDomain('4'), d5:()=>drawDomain('5'), about:drawAbout})[page](); drawn[page] = page !== 'schools'; }
   if (page === 'map' && MAP) setTimeout(() => MAP.invalidateSize(), 50);
   window.scrollTo({top:0});
 }
@@ -837,17 +858,6 @@ function drawDomain(d){
         rowsL.map(k => { const [t, d] = k.split('|'); return `<tr><td>${t === 'RT' ? 'RT ป.1' : 'NT ป.3'}</td><td>${esc(d)}</td>` +
           LN.map(n => { const x = LV.find(l => l.year === yl && l.test === t && l.domain === d && l.level === n) || {}; return `<td class="n">${f2(x.pct)}<br><span class="idx-meta">${fmt(x.n)} คน</span></td>`; }).join('') + '</tr>'; }).join('') + '</tbody>';
     }
-    const VN = D.vnet || [];
-    if (VN.length) {
-      const yv = Math.max(...VN.map(v => v.year)), comps = [...new Set(VN.map(v => v.comp))];
-      const sch = [...new Set(VN.filter(v => v.year === yv && v.lvl === 'สถานศึกษา' && v.n > 0).map(v => v.name))];
-      $('capVN').textContent = `ปีการศึกษา ${yv} · ระดับ ปวช.3 · คะแนนเต็ม 100`;
-      barChart('cVN', sch, comps.map((c, i) => ({label:c.replace('สมรรถนะ', ''), data:sch.map(s => (VN.find(v => v.year === yv && v.name === s && v.comp === c) || {}).mean ?? null), backgroundColor:css('--series-' + (i + 1))})), {score:true, max:100});
-      const yrsV = [...new Set(VN.map(v => v.year))].sort(), lv = ['จังหวัด', 'ภาค', 'ประเทศ'];
-      $('tVN').innerHTML = '<thead><tr><th>ระดับ</th><th>ปีการศึกษา</th><th class="n">ผู้เข้าสอบ</th>' + comps.map(c => `<th class="n">${esc(c.replace('สมรรถนะ', ''))}</th>`).join('') + '</tr></thead><tbody>' +
-        lv.flatMap(l => yrsV.map(y => { const r = VN.filter(v => v.lvl === l && v.year === y); if (!r.length) return '';
-          return `<tr><td>${l === 'จังหวัด' ? 'จังหวัดสระบุรี' : l}</td><td>${y}</td><td class="n">${fmt(r[0].n)}</td>` + comps.map(c => `<td class="n">${f2((r.find(v => v.comp === c) || {}).mean)}</td>`).join('') + '</tr>'; })).join('') + '</tbody>';
-    }
     const UO = ['จังหวัด', 'ภาค', 'ประเทศ', 'สพฐ.', 'สช.', 'สถ.'], uo = q => { const i = UO.indexOf(q.unit); return i < 0 ? 99 : i; };
     rt.sort((a, b) => uo(a) - uo(b)); nt.sort((a, b) => uo(a) - uo(b));
     if (rt.length) barChart('cRT', rt.map(q => q.unit), [{label:'RT', data:rt.map(q => q.value), backgroundColor:css('--series-1')}], {pct:true, max:100}); else noData('RT', ['capRT']);
@@ -1047,6 +1057,68 @@ function renderNnet(){
   $('tNN').innerHTML = '<thead><tr><th>หน่วย</th>' + NLV.map(l => `<th class="n">${l}</th>`).join('') + '<th class="n">เฉลี่ย 3 ระดับ</th><th>ระดับเป้าหมาย</th></tr></thead><tbody>' +
     row('ระดับประเทศ', 'ประเทศ', null) + row('ระดับภาค', 'ภาค', null) + row('จังหวัดสระบุรี', 'จังหวัด', null, 'total') +
     units.map(u => row('สกร.อำเภอ' + u, 'สกร.อำเภอ', u)).join('') + '</tbody>';
+}
+
+/* ---------- V-NET (ข้อมูลเพิ่มเติม) ---------- */
+const VSMALL = 20;
+const vcl = c => c.replace('สมรรถนะ', '');
+function drawVnet(){
+  const V = D.vnet || [];
+  if (!V.length) { $('vNote').textContent = 'ยังไม่มีข้อมูล V-NET'; return; }
+  const ys = [...new Set(V.map(v => v.year))].sort((a, b) => b - a), comps = [...new Set(V.map(v => v.comp))];
+  $('vYear').innerHTML = ys.map(y => `<option>${y}</option>`).join('');
+  $('vComp').innerHTML = comps.map(c => `<option value="${esc(c)}">${esc(vcl(c))}</option>`).join('');
+  $('vYear').onchange = $('vComp').onchange = renderVnet;
+  renderVnet();
+}
+function renderVnet(){
+  const V = D.vnet, y = Number($('vYear').value), comp = $('vComp').value;
+  const comps = [...new Set(V.map(v => v.comp))], ys = [...new Set(V.map(v => v.year))].sort((a, b) => a - b);
+  const at = (lvl, yr, c, name) => V.find(v => v.lvl === lvl && v.year === yr && v.comp === c && (name === undefined || v.name === name)) || {};
+  const sch = [...new Set(V.filter(v => v.year === y && v.lvl === 'สถานศึกษา' && v.n > 0 && !nv(v.mean)).map(v => v.name))];
+  const none = [...new Set(V.filter(v => v.year === y && v.lvl === 'สถานศึกษา' && !(v.n > 0)).map(v => v.name))];
+  const py = ys.filter(v => v < y).pop();
+  const d = (a, b) => nv(a) || nv(b) ? '' : `${a - b >= 0 ? '+' : ''}${f2(a - b)}`;
+  $('vNote').innerHTML = `<b>ข้อมูลเพิ่มเติม</b> การทดสอบทางการศึกษาระดับชาติด้านอาชีวศึกษา (V-NET) ระดับ ปวช.3 จาก สทศ. · ไม่อยู่ใน 18 ดัชนีทางการศึกษา ปีงบประมาณ 2569 · คะแนนเต็ม 100 · แสดงเฉพาะสถานศึกษาที่มีผู้เข้าสอบ`;
+  const pn = at('จังหวัด', y, comps[0]).n, ppn = py ? at('จังหวัด', py, comps[0]).n : null;
+  $('vTiles').innerHTML = comps.map((c, i) => { const p = at('จังหวัด', y, c).mean, n = at('ประเทศ', y, c).mean, pp = py ? at('จังหวัด', py, c).mean : null;
+      return tile(esc(vcl(c)), f2(p), `ประเทศ ${f2(n)} (${d(p, n)})${nv(pp) ? '' : ` · ปี ${py}: ${f2(pp)} (${d(p, pp)})`}`, ['', 'c-purple', 'c-green'][i]); }).join('') +
+    tile('ผู้เข้าสอบ (คน)', fmt(pn), `${fmt(sch.length)} สถานศึกษา` + (nv(ppn) ? '' : ` · ปี ${py}: ${fmt(ppn)} คน`), 'c-grey');
+  const SC = [['จังหวัด', 'จังหวัดสระบุรี'], ['ภาค', 'ภาค'], ['ประเทศ', 'ประเทศ']];
+  barChart('cV1', comps.map(vcl), SC.map((s, i) => ({label:s[1], data:comps.map(c => at(s[0], y, c).mean ?? null), backgroundColor:css('--series-' + (i + 1))})), {horizontal:false, score:true});
+  $('vCap1').textContent = `ปีการศึกษา ${y} · คะแนนเต็ม 100`;
+  if (charts.cV2) charts.cV2.destroy();
+  charts.cV2 = new Chart($('cV2'), {type:'line', data:{labels:ys.map(String), datasets:comps.map((c, i) => ({label:vcl(c), data:ys.map(v => at('จังหวัด', v, c).mean ?? null),
+      borderColor:css('--series-' + (i + 1)), backgroundColor:css('--series-' + (i + 1)), borderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0}))},
+    options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+      plugins:{legend:{position:'top', align:'start', labels:{boxWidth:12, boxHeight:12}}, tooltip:{callbacks:{label:x => `${x.dataset.label}: ${f2(x.raw)} คะแนน (ประเทศ ${f2(at('ประเทศ', ys[x.dataIndex], comps[x.datasetIndex]).mean)})`}}},
+      scales:{y:{suggestedMin:0, suggestedMax:60, grid:{color:css('--grid')}}, x:{grid:{display:false}}}}});
+  $('vCap2').textContent = `ระดับจังหวัด ปีการศึกษา ${ys[0]} – ${ys[ys.length - 1]} · ชี้ที่จุดเพื่อดูค่าระดับประเทศ`;
+  const pm = at('จังหวัด', y, comp).mean;
+  const S = sch.map(n => ({name:n, ...at('สถานศึกษา', y, comp, n)})).filter(x => !nv(x.mean)).sort((a, b) => b.mean - a.mean);
+  const lab = x => `${x.name.replace('วิทยาลัยเทคโนโลยีอาชีวเกษตรสงเคราะห์สระบุรี', 'วท.เกษตรสงเคราะห์').replace('ซิเมนต์ไทยอนุสรณ์', 'ฯ').replace('อาชีวศึกษาเทศบาล', 'อศ.เทศบาล').replace('วิทยาลัย', 'วท.')} (${fmt(x.n)} คน)`;
+  $('vT3').textContent = `คะแนนเฉลี่ยรายสถานศึกษา · ${vcl(comp)}`;
+  barChart('cV3', S.map(lab), [{label:vcl(comp), data:S.map(x => x.mean), backgroundColor:S.map(x => x.n < VSMALL ? css('--series-1') + '66' : css('--series-1'))}], {score:true, max:100});
+  charts.cV3.options.plugins.tooltip.callbacks.label = x => `${f2(x.raw)} คะแนน · S.D. ${f2(S[x.dataIndex].sd)} · ผู้เข้าสอบ ${fmt(S[x.dataIndex].n)} คน`; charts.cV3.update();
+  $('vCap3').textContent = `ปีการศึกษา ${y} · เรียงจากมากไปน้อย · จังหวัด ${f2(pm)} · แท่งสีอ่อน = ผู้เข้าสอบน้อยกว่า ${VSMALL} คน ค่าเฉลี่ยผันผวนสูง`;
+  const NEG = '#ea7a3f', POS = css('--series-1');
+  barChart('cV4', S.map(lab), [{label:'ผลต่างจากจังหวัด', data:S.map(x => +(x.mean - pm).toFixed(2)), backgroundColor:S.map(x => (x.mean - pm >= 0 ? POS : NEG) + (x.n < VSMALL ? '66' : ''))}], {score:true});
+  charts.cV4.options.plugins.tooltip.callbacks.label = x => `${x.raw >= 0 ? '+' : ''}${f2(x.raw)} คะแนน (สถานศึกษา ${f2(S[x.dataIndex].mean)} · จังหวัด ${f2(pm)})`;
+  charts.cV4.options.scales.x.ticks.callback = v => (v > 0 ? '+' : '') + v; charts.cV4.update();
+  $('vCap4').textContent = `${vcl(comp)} ปีการศึกษา ${y} · คะแนนสถานศึกษา − ค่าเฉลี่ยจังหวัด (${f2(pm)}) · สีม่วง = สูงกว่าจังหวัด · สีส้ม = ต่ำกว่าจังหวัด`;
+  $('vTblT').textContent = `ผลการทดสอบ V-NET รายสถานศึกษา ปีการศึกษา ${y}`;
+  $('vCap5').textContent = 'ค่าเฉลี่ย (S.D.) · ตัวเลขสีม่วง/ส้ม = ผลต่างจากค่าเฉลี่ยจังหวัด' + (none.length ? ` · ไม่มีผู้เข้าสอบ: ${none.map(esc).join(', ')}` : '');
+  const cell = (x, ref) => nv(x.mean) ? '<td class="n"><span class="empty">–</span></td>' : `<td class="n">${f2(x.mean)} <span class="idx-meta">(${f2(x.sd)})</span>${nv(ref) ? '' : `<small class="${x.mean - ref >= 0 ? 'dpos' : 'dneg'}">${d(x.mean, ref)}</small>`}</td>`;
+  const rowsS = sch.map(n => ({name:n, n:at('สถานศึกษา', y, comps[0], n).n})).sort((a, b) => b.n - a.n);
+  $('tV1').innerHTML = '<thead><tr><th>สถานศึกษา</th><th class="n">ผู้เข้าสอบ (คน)</th>' + comps.map(c => `<th class="n">${esc(vcl(c))}</th>`).join('') + '</tr></thead><tbody>' +
+    rowsS.map(r => `<tr><td>${esc(r.name)}${r.n < VSMALL ? ' <span class="chip wait">ผู้สอบน้อย</span>' : ''}</td><td class="n">${fmt(r.n)}</td>` + comps.map(c => cell(at('สถานศึกษา', y, c, r.name), at('จังหวัด', y, c).mean)).join('') + '</tr>').join('') +
+    SC.map(s => `<tr class="${s[0] === 'จังหวัด' ? 'total' : ''}"><td>${s[1]}</td><td class="n">${fmt(at(s[0], y, comps[0]).n)}</td>` + comps.map(c => cell(at(s[0], y, c), null)).join('') + '</tr>').join('') + '</tbody>';
+  $('tV2').innerHTML = '<thead><tr><th>ระดับ</th><th>ปีการศึกษา</th><th class="n">ผู้เข้าสอบ</th>' + comps.map(c => `<th class="n">${esc(vcl(c))}</th>`).join('') + '</tr></thead><tbody>' +
+    SC.flatMap(s => ys.map(v => { const r = at(s[0], v, comps[0]); if (nv(r.mean)) return '';
+      const calc = /^คำนวณ/.test(r.src || '');
+      return `<tr class="${s[0] === 'จังหวัด' ? 'total' : ''}"><td>${s[1]}</td><td>${v}${calc ? '*' : ''}</td><td class="n">${fmt(r.n)}</td>` + comps.map(c => `<td class="n">${f2(at(s[0], v, c).mean)}</td>`).join('') + '</tr>'; })).join('') + '</tbody>';
+  const calcY = [...new Set(V.filter(v => v.lvl === 'จังหวัด' && /^คำนวณ/.test(v.src || '')).map(v => v.year))];
+  $('vCap6').textContent = 'คะแนนเฉลี่ย (คะแนนเต็ม 100)' + (calcY.length ? ` · * ปีการศึกษา ${calcY.join(', ')} คำนวณจากคะแนนรายสถานศึกษา ถ่วงน้ำหนักด้วยจำนวนผู้เข้าสอบ` : ' · ที่มา: สทศ.');
 }
 /* ---------- อ้างอิง ---------- */
 function drawAbout(){
