@@ -99,6 +99,13 @@
   .idx-meta{font-size:12px;color:var(--text-soft);line-height:1.55}
   .chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:600;background:rgba(99,102,241,.1);color:#4338ca;margin-right:6px}
   .chip.wait{background:rgba(100,116,139,.12);color:#475569}
+  .chip.t-high{background:rgba(27,175,122,.14);color:#0f766e}.chip.t-std{background:rgba(99,102,241,.12);color:#4338ca}.chip.t-base{background:rgba(235,104,52,.14);color:#b45309}.chip.t-none{background:rgba(100,116,139,.12);color:#475569}
+  .size-rule{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+  .size-rule .sr{padding:12px 14px;border-radius:14px;background:var(--glass-bg-card);border:1px solid var(--glass-border);border-top:4px solid var(--c)}
+  .size-rule .sr b{display:block;font-size:15px;color:var(--deep-blue)}.size-rule .sr span{font-size:13px;color:var(--text-soft)}
+  #tZ1 th,#tZ1 td{white-space:nowrap}
+  #tZ1 thead tr:first-child th{text-align:center}
+  @media (max-width:900px){.size-rule{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .delta{font-size:12.5px;color:var(--text-muted)}
   .empty{color:var(--text-soft);font-style:italic}
   .page{display:none}.page.active{display:block;animation:fade .35s ease}
@@ -181,6 +188,7 @@
       <li class="menu-group-label">ข้อมูลพื้นฐาน</li>
       <li class="menu-item active" data-page="overview">ภาพรวมจังหวัด</li>
       <li class="menu-item" data-page="schools">สถานศึกษาและผู้เรียน</li>
+      <li class="menu-item" data-page="size">ขนาดสถานศึกษา</li>
       <li class="menu-item" data-page="map">แผนที่สถานศึกษา</li>
       <li class="menu-item" data-page="higher">อุดมศึกษา</li>
       <li class="menu-item" data-page="population">ประชากรวัยเรียน</li>
@@ -192,6 +200,7 @@
       <li class="menu-item" data-page="d5">5. ตอบโจทย์บริบท</li>
       <li class="menu-group-label">ข้อมูลเพิ่มเติม</li>
       <li class="menu-item" data-page="onet">O-NET รายละเอียด</li>
+      <li class="menu-item" data-page="nnet">N-NET การศึกษานอกระบบ</li>
       <li class="menu-group-label">อ้างอิง</li>
       <li class="menu-item" data-page="about">นิยามและแหล่งข้อมูล</li>
       <li class="menu-group-label">ความคิดเห็นของท่าน</li>
@@ -241,6 +250,33 @@
           <h3>รายชื่อสถานศึกษา</h3><p class="cap">เรียงตามจำนวนนักเรียน</p>
           <input type="search" id="q" placeholder="ค้นหาชื่อหรือรหัสสถานศึกษา" style="margin-bottom:10px">
           <div class="table-wrapper scroll"><table id="tSchool"></table></div>
+        </div>
+      </section>
+
+      <!-- ขนาดสถานศึกษา -->
+      <section class="page" id="p-size">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลพื้นฐาน</div><h1 class="page-title">ขนาดสถานศึกษา</h1></div>
+          <div class="filter-box"><label>ปีการศึกษา<select id="zYear"></select></label></div>
+        </div>
+        <div class="size-rule" id="zRule"></div>
+        <div class="summary-grid" id="zTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3>สถานศึกษาจำแนกตามขนาดและสังกัด</h3><p class="cap" id="zCap1"></p><div class="chart"><canvas id="cZSize"></canvas></div></div>
+          <div class="glass"><h3>โรงเรียนขนาดเล็ก สพป. จำแนกตามจำนวนนักเรียน</h3><p class="cap" id="zCap2"></p><div class="chart"><canvas id="cZBand"></canvas></div></div>
+          <div class="glass full"><h3>แนวโน้มจำนวนโรงเรียนขนาดเล็ก สพป.สระบุรี เขต 1 และเขต 2</h3><p class="cap" id="zCap3"></p><div class="chart"><canvas id="cZTrend"></canvas></div></div>
+        </div>
+        <div class="glass" style="margin-bottom:22px"><h3 id="zT1Title"></h3><p class="cap" id="zT1Cap"></p><div class="table-wrapper"><table id="tZ1"></table></div></div>
+        <div class="glass" style="margin-bottom:22px"><h3>เปรียบเทียบจำนวนสถานศึกษาตามขนาด ปีการศึกษา 2568 – 2569</h3><p class="cap">แสดงเป็น ปี 2568 / ปี 2569 · จัดขนาดทั้งสองปีด้วยเกณฑ์ปัจจุบันเพื่อให้เปรียบเทียบได้</p><div class="table-wrapper"><table id="tZ2"></table></div></div>
+        <div class="glass">
+          <div class="page-header" style="margin-bottom:6px;align-items:flex-end"><h3 style="margin:0">รายชื่อสถานศึกษา</h3>
+            <div class="filter-box"><label>แสดง<select id="zList">
+              <option value="chg">เปลี่ยนขนาดระหว่างปี 2568 – 2569</option>
+              <option value="near">ใกล้เกณฑ์ขนาดเล็ก (เกินเกณฑ์ไม่เกิน 20 คน)</option>
+              <option value="small">โรงเรียนขนาดเล็กทั้งหมด</option>
+              <option value="zero">ไม่มีนักเรียน</option></select></label></div></div>
+          <p class="cap" id="zListCap"></p>
+          <div class="table-wrapper scroll"><table id="tZ3"></table></div>
         </div>
       </section>
 
@@ -353,6 +389,21 @@
         <div class="glass"><h3>ค่าสถิติจำแนกตามระดับการรายงาน</h3><p class="cap" id="oCap3"></p><div class="table-wrapper"><table id="tOS"></table></div></div>
       </section>
 
+      <!-- N-NET -->
+      <section class="page" id="p-nnet">
+        <div class="page-header">
+          <div><div class="breadcrumb">ข้อมูลเพิ่มเติม</div><h1 class="page-title">ผลการทดสอบ N-NET การศึกษานอกระบบโรงเรียน</h1></div>
+          <div class="filter-box"><label>ระดับการศึกษา<select id="nLevel"></select></label></div>
+        </div>
+        <div class="glass" style="margin-bottom:18px;padding:12px 18px"><p class="cap" id="nNote" style="margin:0"></p></div>
+        <div class="summary-grid" id="nTiles"></div>
+        <div class="charts-grid">
+          <div class="glass"><h3 id="nT1">คะแนนเฉลี่ย เทียบภาคและประเทศ</h3><p class="cap" id="nCap1"></p><div class="chart"><canvas id="cNN"></canvas></div></div>
+          <div class="glass"><h3>คะแนนเฉลี่ยราย สกร.อำเภอ</h3><p class="cap" id="nCap2"></p><div class="chart tall"><canvas id="cND"></canvas></div></div>
+        </div>
+        <div class="glass"><h3>ผลการทดสอบราย สกร.อำเภอ และระดับเป้าหมาย</h3><p class="cap" id="nCap3"></p><div class="table-wrapper"><table id="tNN"></table></div></div>
+      </section>
+
       <!-- อ้างอิง -->
       <section class="page" id="p-about"><div class="page-header"><div><div class="breadcrumb">อ้างอิง</div><h1 class="page-title">นิยามดัชนีและแหล่งข้อมูล</h1></div></div>
         <div class="glass" style="margin-bottom:22px"><h3>นิยามและสูตรคำนวณดัชนี</h3><p class="cap">ตามดัชนีทางการศึกษา ประจำปีงบประมาณ พ.ศ. 2569 (สป.ศธ.)</p><div class="table-wrapper"><table id="tDef"></table></div></div>
@@ -410,7 +461,7 @@ function init(data){
 function show(page){
   document.querySelectorAll('.menu-item').forEach(m => m.classList.toggle('active', m.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'p-' + page));
-  if (!drawn[page]) { ({overview:drawOverview, schools:renderSchools, map:drawMap, higher:drawHigher, onet:drawOnet, population:drawPopulation, d1:()=>drawDomain('1'), d2:()=>drawDomain('2'), d3:()=>drawDomain('3'), d4:()=>drawDomain('4'), d5:()=>drawDomain('5'), about:drawAbout})[page](); drawn[page] = page !== 'schools'; }
+  if (!drawn[page]) { ({overview:drawOverview, schools:renderSchools, size:drawSize, nnet:drawNnet, map:drawMap, higher:drawHigher, onet:drawOnet, population:drawPopulation, d1:()=>drawDomain('1'), d2:()=>drawDomain('2'), d3:()=>drawDomain('3'), d4:()=>drawDomain('4'), d5:()=>drawDomain('5'), about:drawAbout})[page](); drawn[page] = page !== 'schools'; }
   if (page === 'map' && MAP) setTimeout(() => MAP.invalidateSize(), 50);
   window.scrollTo({top:0});
 }
@@ -506,9 +557,9 @@ function renderSchools(){
   barChart('cLevel', lk, [{label:'นักเรียน', data:lk.map(k => byL[k]), backgroundColor:css('--series-1')}]);
   const t = $('q').value.trim();
   const rows = S.filter(s => !t || s.name.includes(t) || s.code.includes(t)).sort((a, b) => b.total - a.total);
-  $('tSchool').innerHTML = '<thead><tr><th>รหัส</th><th>สถานศึกษา</th><th>สังกัด</th><th>อำเภอ</th><th class="n">ชาย</th><th class="n">หญิง</th><th class="n">รวม</th></tr></thead><tbody>' +
-    rows.slice(0, 300).map(s => `<tr><td>${s.code}</td><td>${esc(s.name)}${s.status !== 'มีนักเรียน' ? ' <span class="chip wait">ไม่มีนักเรียน</span>' : ''}</td><td>${esc(s.sub)}</td><td>${esc(s.district)}</td><td class="n">${fmt(s.male)}</td><td class="n">${fmt(s.female)}</td><td class="n">${fmt(s.total)}</td></tr>`).join('') +
-    (rows.length > 300 ? `<tr><td colspan="7" class="empty">แสดง 300 จาก ${fmt(rows.length)} แห่ง — พิมพ์ค้นหาเพื่อจำกัดผล</td></tr>` : '') + '</tbody>';
+  $('tSchool').innerHTML = '<thead><tr><th>รหัส</th><th>สถานศึกษา</th><th>สังกัด</th><th>อำเภอ</th><th>ขนาด</th><th class="n">ชาย</th><th class="n">หญิง</th><th class="n">รวม</th></tr></thead><tbody>' +
+    rows.slice(0, 300).map(s => `<tr><td>${s.code}</td><td>${esc(s.name)}${s.status !== 'มีนักเรียน' ? ' <span class="chip wait">ไม่มีนักเรียน</span>' : ''}</td><td>${esc(s.sub)}</td><td>${esc(s.district)}</td><td>${SIZE_SUBS.includes(s.sub) ? sizeOf(s.total) : ''}</td><td class="n">${fmt(s.male)}</td><td class="n">${fmt(s.female)}</td><td class="n">${fmt(s.total)}</td></tr>`).join('') +
+    (rows.length > 300 ? `<tr><td colspan="8" class="empty">แสดง 300 จาก ${fmt(rows.length)} แห่ง — พิมพ์ค้นหาเพื่อจำกัดผล</td></tr>` : '') + '</tbody>';
 }
 
 /* ---------- แผนที่ ---------- */
@@ -859,6 +910,143 @@ function renderOnet(){
   $('tOS').innerHTML = '<thead><tr><th>ระดับการรายงาน</th><th>หน่วย</th>' + subs.map(s => `<th class="n">${esc(sj(s))}</th>`).join('') + '</tr></thead><tbody>' +
     keys.map(k => `<tr class="${k.level === 'ระดับจังหวัด' ? 'total' : ''}"><td>${esc(OLV[k.level] || k.level)}</td><td>${esc(OSUB[k.sub] || k.sub)}</td>` +
       subs.map(s => { const x = at(k.level, s, k.sub); return `<td class="n">${f2(x.mean)}<br><span class="idx-meta">${f2(x.pct)}% · ${fmt(x.n)} คน</span></td>`; }).join('') + '</tr>').join('') + '</tbody>';
+}
+
+/* ---------- ขนาดสถานศึกษา ---------- */
+const SIZE_SUBS = ['สพป.สระบุรี เขต 1', 'สพป.สระบุรี เขต 2', 'สพม.สระบุรี', 'สช.เอกชน', 'สช.นานาชาติ'];
+const SPP = ['สพป.สระบุรี เขต 1', 'สพป.สระบุรี เขต 2'], OBEC = ['สพป.สระบุรี เขต 1', 'สพป.สระบุรี เขต 2', 'สพม.สระบุรี'];
+const SZ = ['เล็ก', 'กลาง', 'ใหญ่', 'ใหญ่พิเศษ'], SZ0 = 'ไม่มีนักเรียน';
+const SZC = {'ไม่มีนักเรียน':'#cbd5e1', 'เล็ก':'#a5b4fc', 'กลาง':'#6366f1', 'ใหญ่':'#4338ca', 'ใหญ่พิเศษ':'#1e1b4b'};
+const SUBLAB = {'สช.เอกชน':'สช. โรงเรียนเอกชน', 'สช.นานาชาติ':'สช. โรงเรียนนานาชาติ'};
+const szc = () => (D && D.config && D.config.size) || {s:119, m:719, l:1679, src:''};
+function sizeOf(n){ const c = szc(); if (!n) return SZ0; return n <= c.s ? 'เล็ก' : n <= c.m ? 'กลาง' : n <= c.l ? 'ใหญ่' : 'ใหญ่พิเศษ'; }
+const stOf = (s, y) => y === 2568 ? (s.st68 || 0) : s.total;
+function bandOf(n){ const c = szc().s; if (!n) return SZ0; const e = [20, 40, 60, 80, 100]; for (let i = 0; i < e.length; i++) if (n <= e[i]) return `${i ? e[i - 1] + 1 : 1}–${e[i]}`; return n <= c ? `101–${c}` : null; }
+function drawSize(){
+  const c = szc();
+  const rng = [['เล็ก', `ไม่เกิน ${fmt(c.s)} คน`], ['กลาง', `${fmt(c.s + 1)} – ${fmt(c.m)} คน`], ['ใหญ่', `${fmt(c.m + 1)} – ${fmt(c.l)} คน`], ['ใหญ่พิเศษ', `${fmt(c.l + 1)} คนขึ้นไป`]];
+  $('zRule').innerHTML = rng.map(r => `<div class="sr" style="--c:${SZC[r[0]]}"><b>ขนาด${r[0]}</b><span>${r[1]}</span></div>`).join('');
+  const ys = [D.config.year]; if (D.schools.some(s => s.st68)) ys.push(D.config.year - 1);
+  $('zYear').innerHTML = ys.map(y => `<option value="${y}">${y}</option>`).join('');
+  $('zYear').onchange = renderSize; $('zList').onchange = renderSizeList;
+  renderSize();
+}
+function sizeAgg(y){
+  const A = {};
+  SIZE_SUBS.forEach(sub => { A[sub] = {}; SZ.concat(SZ0).forEach(k => A[sub][k] = {n:0, st:0}); });
+  D.schools.filter(s => SIZE_SUBS.includes(s.sub)).forEach(s => { const t = stOf(s, y), k = sizeOf(t); A[s.sub][k].n++; A[s.sub][k].st += t; });
+  A['รวม สพฐ.'] = {}; SZ.concat(SZ0).forEach(k => A['รวม สพฐ.'][k] = {n:OBEC.reduce((a, u) => a + A[u][k].n, 0), st:OBEC.reduce((a, u) => a + A[u][k].st, 0)});
+  return A;
+}
+function renderSize(){
+  const y = Number($('zYear').value), cy = D.config.year, A = sizeAgg(y), c = szc();
+  const tot = (u, f) => SZ.concat(SZ0).reduce((a, k) => a + A[u][k][f], 0);
+  const sppSmall = SPP.reduce((a, u) => a + A[u]['เล็ก'].n + A[u][SZ0].n, 0), sppAll = SPP.reduce((a, u) => a + tot(u, 'n'), 0), sppZero = SPP.reduce((a, u) => a + A[u][SZ0].n, 0);
+  const ob = A['รวม สพฐ.'], obSt = tot('รวม สพฐ.', 'st');
+  const pc = (a, b) => b ? f2(a / b * 100) : '';
+  let moved = '';
+  if (y === cy && D.schools.some(s => s.st68)) {
+    const m = D.schools.filter(s => OBEC.includes(s.sub) && s.st68 && sizeOf(s.st68) === 'กลาง' && sizeOf(s.total) === 'เล็ก').length;
+    const up = D.schools.filter(s => OBEC.includes(s.sub) && s.st68 && sizeOf(s.st68) === 'เล็ก' && sizeOf(s.total) === 'กลาง').length;
+    moved = tile('กลาง → เล็ก (แห่ง)', fmt(m), `เทียบปี ${cy - 1} · เล็ก → กลาง ${fmt(up)} แห่ง`, 'c-grey');
+  }
+  $('zTiles').innerHTML =
+    tile('โรงเรียนขนาดเล็ก สพป. (แห่ง)', fmt(sppSmall), `ร้อยละ ${pc(sppSmall, sppAll)} ของโรงเรียน สพป. · รวมไม่มีนักเรียน ${fmt(sppZero)} แห่ง`) +
+    tile('นักเรียนในโรงเรียนขนาดเล็ก สพฐ. (คน)', fmt(ob['เล็ก'].st), `ร้อยละ ${pc(ob['เล็ก'].st, obSt)} ของนักเรียน สพฐ.`, 'c-purple') +
+    tile('โรงเรียนขนาดใหญ่พิเศษ สพฐ. (แห่ง)', fmt(ob['ใหญ่พิเศษ'].n), `นักเรียน ${fmt(ob['ใหญ่พิเศษ'].st)} คน (ร้อยละ ${pc(ob['ใหญ่พิเศษ'].st, obSt)})`, 'c-green') + moved;
+  const rows = SIZE_SUBS.slice(0, 3).concat(['รวม สพฐ.'], SIZE_SUBS.slice(3)), lab = u => SUBLAB[u] || u;
+  const chartRows = SIZE_SUBS;
+  barChart('cZSize', chartRows.map(lab), SZ.concat(SZ0).map(k => ({label:k, data:chartRows.map(u => A[u][k].n), backgroundColor:SZC[k], borderColor:'#ffffff', borderWidth:1})), {stacked:true});
+  charts.cZSize.options.plugins.tooltip.callbacks.label = x => `${x.dataset.label}: ${fmt(x.raw)} แห่ง`; charts.cZSize.update();
+  $('zCap1').textContent = `ปีการศึกษา ${y} (แห่ง) · โรงเรียนเอกชนจัดขนาดตามเกณฑ์เดียวกันเพื่อการเปรียบเทียบ`;
+  const B = [SZ0, '1–20', '21–40', '41–60', '61–80', '81–100', `101–${c.s}`];
+  const bc = (u, b) => D.schools.filter(s => s.sub === u && bandOf(stOf(s, y)) === b).length;
+  barChart('cZBand', B.map(b => b === SZ0 ? 'ไม่มี นร.' : b + ' คน'), SPP.map((u, i) => ({label:u, data:B.map(b => bc(u, b)), backgroundColor:css('--series-' + (i + 1))})), {horizontal:false});
+  charts.cZBand.options.plugins.tooltip.callbacks.label = x => `${x.dataset.label}: ${fmt(x.raw)} แห่ง`; charts.cZBand.update();
+  $('zCap2').textContent = `ปีการศึกษา ${y} (แห่ง) · นับรวมโรงเรียนที่ไม่มีนักเรียน`;
+  const H = D.sizeHist || [], hy = [...new Set(H.map(h => h.year))].filter(v => v < cy).sort();
+  const yrs = hy.concat([cy]);
+  const series = SPP.map((u, i) => ({label:u, data:yrs.map(v => v === cy ? SPP.includes(u) ? A0(u) : null : H.filter(h => h.year === v && h.sub === u).reduce((a, h) => a + h.n, 0)),
+    borderColor:css('--series-' + (i + 1)), backgroundColor:css('--series-' + (i + 1)), borderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0}));
+  function A0(u){ const a = sizeAgg(cy)[u]; return a['เล็ก'].n + a[SZ0].n; }
+  if (charts.cZTrend) charts.cZTrend.destroy();
+  charts.cZTrend = new Chart($('cZTrend'), {type:'line', data:{labels:yrs.map(String), datasets:series},
+    options:{maintainAspectRatio:false, animation:false, interaction:{mode:'index', intersect:false},
+      plugins:{legend:{position:'top', align:'start', labels:{boxWidth:12, boxHeight:12}}, tooltip:{callbacks:{label:x => `${x.dataset.label}: ${fmt(x.raw)} แห่ง`}}},
+      scales:{y:{suggestedMin:0, grid:{color:css('--grid')}, ticks:{callback:v => fmt(v)}}, x:{grid:{display:false}}}}});
+  const rule = (H.find(h => h.rule) || {}).rule || '';
+  $('zCap3').textContent = (hy.length ? `ปีการศึกษา ${hy[0]} – ${hy[hy.length - 1]} จากเล่มสารสนเทศแต่ละปี (${rule}) · ` : '') + `ปีการศึกษา ${cy} คำนวณจากฐานข้อมูลตามเกณฑ์ปัจจุบัน (ไม่เกิน ${c.s} คน) · นับรวมโรงเรียนที่ไม่มีนักเรียน`;
+  $('zT1Title').textContent = `จำนวนสถานศึกษาและนักเรียน จำแนกตามขนาดสถานศึกษาและสังกัด ปีการศึกษา ${y}`;
+  $('zT1Cap').textContent = 'ช่องละ 2 ค่า: สถานศึกษา (แห่ง) และนักเรียน (คน) · รวม สพฐ. ไม่รวมศูนย์การศึกษาพิเศษ · ' + (c.src || '');
+  const z = x => x ? fmt(x) : '<span class="empty">–</span>';
+  $('tZ1').innerHTML = '<thead><tr><th rowspan="2">สังกัด</th>' + SZ.map(k => `<th colspan="2">${k}</th>`).join('') + `<th rowspan="2" class="n">ไม่มีนักเรียน<br>(แห่ง)</th><th colspan="2">รวม</th></tr><tr>` +
+    SZ.concat(['รวม']).map(() => '<th class="n">แห่ง</th><th class="n">คน</th>').join('') + '</tr></thead><tbody>' +
+    rows.map(u => `<tr class="${u === 'รวม สพฐ.' ? 'total' : ''}"><td>${esc(lab(u))}</td>` + SZ.map(k => `<td class="n">${z(A[u][k].n)}</td><td class="n">${z(A[u][k].st)}</td>`).join('') +
+      `<td class="n">${z(A[u][SZ0].n)}</td><td class="n">${z(tot(u, 'n'))}</td><td class="n">${z(tot(u, 'st'))}</td></tr>`).join('') + '</tbody>';
+  if (D.schools.some(s => s.st68)) {
+    const P = sizeAgg(cy - 1), C = sizeAgg(cy), sg = d => d > 0 ? '+' + d : String(d);
+    $('tZ2').innerHTML = '<thead><tr><th>สังกัด</th>' + SZ.concat(SZ0).map(k => `<th class="n">${k}</th>`).join('') + '<th class="n">เพิ่ม/ลด ขนาดเล็ก</th></tr></thead><tbody>' +
+      rows.map(u => `<tr class="${u === 'รวม สพฐ.' ? 'total' : ''}"><td>${esc(lab(u))}</td>` + SZ.concat(SZ0).map(k => `<td class="n">${P[u][k].n} / ${C[u][k].n}</td>`).join('') +
+        `<td class="n">${sg(C[u]['เล็ก'].n - P[u]['เล็ก'].n)}</td></tr>`).join('') + '</tbody>';
+  }
+  renderSizeList();
+}
+function renderSizeList(){
+  const y = Number($('zYear').value), cy = D.config.year, c = szc(), mode = $('zList').value;
+  let S = D.schools.filter(s => SIZE_SUBS.includes(s.sub)), cap = '';
+  if (mode === 'chg') { S = S.filter(s => s.st68 && sizeOf(s.st68) !== sizeOf(s.total)); cap = `สถานศึกษาที่ขนาดเปลี่ยนระหว่างปีการศึกษา ${cy - 1} – ${cy} (จัดขนาดทั้งสองปีด้วยเกณฑ์ปัจจุบัน)`; }
+  if (mode === 'near') { S = S.filter(s => stOf(s, y) > c.s && stOf(s, y) <= c.s + 20); cap = `ปีการศึกษา ${y} · นักเรียน ${c.s + 1} – ${c.s + 20} คน · หากนักเรียนลดลงจะเข้าเกณฑ์ขนาดเล็ก`; }
+  if (mode === 'small') { S = S.filter(s => sizeOf(stOf(s, y)) === 'เล็ก'); cap = `ปีการศึกษา ${y} · นักเรียนไม่เกิน ${c.s} คน (ไม่รวมโรงเรียนที่ไม่มีนักเรียน)`; }
+  if (mode === 'zero') { S = S.filter(s => !stOf(s, y)); cap = `ปีการศึกษา ${y} · ไม่มีนักเรียน ณ วันที่เก็บข้อมูล`; }
+  S.sort((a, b) => SIZE_SUBS.indexOf(a.sub) - SIZE_SUBS.indexOf(b.sub) || stOf(a, y) - stOf(b, y));
+  $('zListCap').textContent = `${cap} · ${fmt(S.length)} แห่ง`;
+  $('tZ3').innerHTML = '<thead><tr><th>สถานศึกษา</th><th>สังกัด</th><th>อำเภอ</th>' + (D.schools.some(s => s.st68) ? `<th class="n">นักเรียน ${cy - 1}</th><th>ขนาด ${cy - 1}</th>` : '') + `<th class="n">นักเรียน ${cy}</th><th>ขนาด ${cy}</th></tr></thead><tbody>` +
+    (S.length ? S.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(SUBLAB[s.sub] || s.sub)}</td><td>${esc(s.district)}</td>` +
+      (D.schools.some(x => x.st68) ? `<td class="n">${fmt(s.st68)}</td><td>${s.st68 === null ? '' : sizeOf(s.st68)}</td>` : '') + `<td class="n">${fmt(s.total)}</td><td>${sizeOf(s.total)}</td></tr>`).join('')
+      : '<tr><td colspan="7" class="empty">ไม่มีรายการ</td></tr>') + '</tbody>';
+}
+
+/* ---------- N-NET (ข้อมูลเพิ่มเติม) ---------- */
+const NLV = ['ประถมศึกษา', 'มัธยมศึกษาตอนต้น', 'มัธยมศึกษาตอนปลาย'], NAVG = 'เฉลี่ย 5 สาระ';
+const NSCOPE = [['จังหวัด', 'จังหวัดสระบุรี'], ['ภาค', 'ภาค'], ['ประเทศ', 'ประเทศ']];
+function nTier(v){ const t = D.config.nnetTarget || {}; if (nv(v)) return ['', '']; if (!nv(t.high) && v >= t.high) return ['t-high', 'ขั้นสูง']; if (!nv(t.std) && v >= t.std) return ['t-std', 'ขั้นมาตรฐาน']; if (!nv(t.base) && v >= t.base) return ['t-base', 'ขั้นต้น']; return ['t-none', 'ยังไม่ถึงขั้นต้น']; }
+function drawNnet(){
+  const N = D.nnet || [];
+  if (!N.length) { $('nNote').textContent = 'ยังไม่มีข้อมูล N-NET'; return; }
+  $('nLevel').innerHTML = '<option value="">ภาพรวม 3 ระดับ</option>' + NLV.filter(l => N.some(x => x.level === l)).map(l => `<option>${l}</option>`).join('');
+  $('nLevel').onchange = renderNnet; renderNnet();
+}
+function renderNnet(){
+  const N = D.nnet, y = Math.max(...N.map(x => x.year)), r = (N.find(x => x.year === y) || {}).round, lv = $('nLevel').value, t = D.config.nnetTarget || {};
+  const get = (scope, unit, level, subj) => { const x = N.find(n => n.year === y && n.scope === scope && (unit === null || n.unit === unit) && n.level === level && n.subject === subj); return x ? x.mean : null; };
+  const avg3 = (scope, unit) => { const v = NLV.map(l => get(scope, unit, l, NAVG)).filter(x => !nv(x)); return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 100 + 1e-6) / 100 : null; };
+  const val = (scope, unit) => lv ? get(scope, unit, lv, NAVG) : avg3(scope, unit);
+  const units = [...new Set(N.filter(n => n.year === y && n.scope === 'สกร.อำเภอ').map(n => n.unit))].sort((a, b) => a.localeCompare(b, 'th'));
+  $('nNote').innerHTML = `<b>ข้อมูลเพิ่มเติม</b> ผลการทดสอบ N-NET ครั้งที่ ${esc(r)} ปีการศึกษา ${y} (สทศ.) ของผู้เรียนสถานศึกษาสังกัด สกร.จังหวัดสระบุรี · ไม่อยู่ใน 18 ดัชนี · เป้าหมายตามที่ สกร.จังหวัดกำหนด: ขั้นสูง ${f2(t.high)} · ขั้นมาตรฐาน ${f2(t.std)} · ขั้นต้น ${f2(t.base)} คะแนน`;
+  const pv = val('จังหวัด', null), rv = val('ภาค', null), cv = val('ประเทศ', null), tp = nTier(pv);
+  const reach = units.filter(u => nTier(val('สกร.อำเภอ', u))[0] === 't-high').length, have = units.filter(u => !nv(val('สกร.อำเภอ', u))).length;
+  const d = (a, b) => nv(a) || nv(b) ? '' : ` (${a - b >= 0 ? '+' : ''}${f2(a - b)})`;
+  $('nTiles').innerHTML = tile(lv ? `คะแนนเฉลี่ย 5 สาระ ${lv}` : 'คะแนนเฉลี่ย 3 ระดับการศึกษา', f2(pv), `จังหวัดสระบุรี · ระดับเป้าหมาย: ${tp[1]}`) +
+    tile('ระดับภาค', f2(rv), 'จังหวัดเทียบภาค' + d(pv, rv), 'c-purple') + tile('ระดับประเทศ', f2(cv), 'จังหวัดเทียบประเทศ' + d(pv, cv), 'c-green') +
+    tile('สกร.อำเภอที่ถึงเป้าหมายขั้นสูง', `${fmt(reach)} / ${fmt(have)}`, `เกณฑ์ ${f2(t.high)} คะแนนขึ้นไป`, 'c-grey');
+  if (lv) {
+    const SJ = [...new Set(N.filter(n => n.level === lv && n.subject !== NAVG).map(n => n.subject))];
+    $('nT1').textContent = 'คะแนนเฉลี่ยรายสาระ เทียบภาคและประเทศ'; $('nCap1').textContent = `${lv} · ครั้งที่ ${r}/${y} · คะแนนเต็ม 100`;
+    barChart('cNN', SJ.map(s => s.replace('สาระ', '')), NSCOPE.map((s, i) => ({label:s[1], data:SJ.map(j => get(s[0], null, lv, j)), backgroundColor:css('--series-' + (i + 1))})), {horizontal:false, score:true});
+  } else {
+    $('nT1').textContent = 'คะแนนเฉลี่ย 5 สาระ รายระดับการศึกษา'; $('nCap1').textContent = `ครั้งที่ ${r}/${y} · คะแนนเต็ม 100`;
+    barChart('cNN', NLV, NSCOPE.map((s, i) => ({label:s[1], data:NLV.map(l => get(s[0], null, l, NAVG)), backgroundColor:css('--series-' + (i + 1))})), {horizontal:false, score:true});
+  }
+  const U = units.filter(u => !nv(val('สกร.อำเภอ', u))).sort((a, b) => val('สกร.อำเภอ', b) - val('สกร.อำเภอ', a));
+  barChart('cND', U, [{label:lv ? 'คะแนนเฉลี่ย 5 สาระ' : 'คะแนนเฉลี่ย 3 ระดับ', data:U.map(u => val('สกร.อำเภอ', u)), backgroundColor:css('--series-1')}], {score:true});
+  $('nCap2').textContent = (lv || 'ภาพรวม 3 ระดับ') + ` · เรียงจากมากไปน้อย · จังหวัด ${f2(pv)} · ประเทศ ${f2(cv)}`;
+  $('nCap3').textContent = 'คะแนนเฉลี่ย 3 ระดับเป็นค่าเฉลี่ยอย่างง่ายของระดับที่มีผู้เข้าสอบ ไม่ถ่วงน้ำหนักด้วยจำนวนผู้เข้าสอบ · สถานศึกษาที่ไม่มีผู้เข้าสอบระดับประถมศึกษาเฉลี่ยจาก 2 ระดับ จึงไม่ควรนำไปเรียงลำดับเทียบกับแห่งอื่นโดยตรง';
+  const cell = v => `<td class="n">${nv(v) ? '<span class="empty">–</span>' : f2(v)}</td>`;
+  const row = (name, scope, unit, cls) => { const a = avg3(scope, unit), tr = nTier(a);
+    return `<tr class="${cls || ''}"><td>${esc(name)}</td>` + NLV.map(l => cell(get(scope, unit, l, NAVG))).join('') + cell(a) + `<td>${tr[1] && scope === 'สกร.อำเภอ' ? `<span class="chip ${tr[0]}">${tr[1]}</span>` : tr[1] && scope === 'จังหวัด' ? `<span class="chip ${tr[0]}">${tr[1]}</span>` : ''}</td></tr>`; };
+  $('tNN').innerHTML = '<thead><tr><th>หน่วย</th>' + NLV.map(l => `<th class="n">${l}</th>`).join('') + '<th class="n">เฉลี่ย 3 ระดับ</th><th>ระดับเป้าหมาย</th></tr></thead><tbody>' +
+    row('ระดับประเทศ', 'ประเทศ', null) + row('ระดับภาค', 'ภาค', null) + row('จังหวัดสระบุรี', 'จังหวัด', null, 'total') +
+    units.map(u => row('สกร.อำเภอ' + u, 'สกร.อำเภอ', u)).join('') + '</tbody>';
 }
 /* ---------- อ้างอิง ---------- */
 function drawAbout(){
